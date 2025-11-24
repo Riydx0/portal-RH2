@@ -117,6 +117,11 @@ export function AppSidebar() {
       url: "/settings/sso",
       show: isAdmin,
     },
+    {
+      title: "Change Password",
+      url: "/settings/change-password",
+      show: true,
+    },
   ];
 
   const getRoleBadgeVariant = (role: string) => {

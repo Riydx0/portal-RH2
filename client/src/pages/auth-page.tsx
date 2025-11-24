@@ -102,6 +102,15 @@ export default function AuthPage() {
                   "Sign in"
                 )}
               </Button>
+              <div className="text-center">
+                <a
+                  href="/forgot-password"
+                  className="text-sm text-primary hover:underline"
+                  data-testid="link-forgot-password"
+                >
+                  Forgot password?
+                </a>
+              </div>
               {import.meta.env.VITE_OPENID_ISSUER_URL && (
                 <>
                   <div className="relative">

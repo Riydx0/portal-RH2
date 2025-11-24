@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
+import { comparePasswords } from "./auth";
 import { db } from "./db";
 import multer from "multer";
 import path from "path";
@@ -748,6 +749,109 @@ export function registerRoutes(app: Express): Server {
     try {
       await db.delete(groups).where(eq(groups.id, parseInt(req.params.id)));
       res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Password Management
+  app.post("/api/change-password", requireAuth, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const user = req.user as any;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).send("Current password and new password are required");
+      }
+
+      const currentUser = await storage.getUser(user.id);
+      if (!currentUser) {
+        return res.status(401).send("User not found");
+      }
+
+      const isPasswordCorrect = await comparePasswords(currentPassword, currentUser.password);
+      if (!isPasswordCorrect) {
+        return res.status(401).send("Current password is incorrect");
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Password reset endpoints
+  const resetCodes = new Map<string, { code: string; expiresAt: number }>();
+
+  app.post("/api/request-password-reset", async (req, res) => {
+    try {
+      const { email } = req.body;
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        // Don't reveal if email exists (security best practice)
+        return res.json({ message: "If email exists, reset code sent" });
+      }
+
+      const resetCode = Math.random().toString().substring(2, 8);
+      resetCodes.set(email, {
+        code: resetCode,
+        expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes
+      });
+
+      // In production, send email. For now, log to console
+      console.log(`[Password Reset] Email: ${email}, Code: ${resetCode}`);
+      res.json({ message: "Reset code sent to email" });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/verify-reset-code", (req, res) => {
+    try {
+      const { email, resetCode } = req.body;
+      const stored = resetCodes.get(email);
+
+      if (!stored || stored.expiresAt < Date.now()) {
+        return res.status(400).send("Reset code expired or invalid");
+      }
+
+      if (stored.code !== resetCode) {
+        return res.status(400).send("Invalid reset code");
+      }
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { email, resetCode, newPassword } = req.body;
+      const stored = resetCodes.get(email);
+
+      if (!stored || stored.expiresAt < Date.now()) {
+        return res.status(400).send("Reset code expired");
+      }
+
+      if (stored.code !== resetCode) {
+        return res.status(400).send("Invalid reset code");
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).send("User not found");
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+      resetCodes.delete(email);
+
+      res.json({ success: true, message: "Password reset successfully" });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

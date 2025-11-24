@@ -23,6 +23,8 @@ import SettingsPage from "@/pages/settings-page";
 import AppearanceSettingsPage from "@/pages/appearance-settings-page";
 import BrandingSettingsPage from "@/pages/branding-settings-page";
 import SSOSettingsPage from "@/pages/sso-settings-page";
+import ChangePasswordPage from "@/pages/change-password-page";
+import ForgotPasswordPage from "@/pages/forgot-password-page";
 import GroupsPage from "@/pages/groups-page";
 
 function Router() {
@@ -44,6 +46,8 @@ function Router() {
       <ProtectedRoute path="/settings/appearance" component={AppearanceSettingsPage} />
       <ProtectedRoute path="/settings/branding" component={BrandingSettingsPage} />
       <ProtectedRoute path="/settings/sso" component={SSOSettingsPage} />
+      <ProtectedRoute path="/settings/change-password" component={ChangePasswordPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>
   );
