@@ -20,6 +20,10 @@ export default function SettingsPage() {
   const [loginDescription, setLoginDescription] = useState("");
   const [loginBgColor, setLoginBgColor] = useState("");
   const [enableRegistration, setEnableRegistration] = useState(true);
+  const [openidIssuerUrl, setOpenidIssuerUrl] = useState("");
+  const [openidClientId, setOpenidClientId] = useState("");
+  const [openidClientSecret, setOpenidClientSecret] = useState("");
+  const [openidCallbackUrl, setOpenidCallbackUrl] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
@@ -35,6 +39,10 @@ export default function SettingsPage() {
       setLoginDescription(settings.login_description || "Manage your IT services, software, licenses, and support tickets");
       setLoginBgColor(settings.login_bg_color || "#f5f5f5");
       setEnableRegistration(settings.enable_registration !== "false");
+      setOpenidIssuerUrl(settings.openid_issuer_url || "");
+      setOpenidClientId(settings.openid_client_id || "");
+      setOpenidClientSecret(settings.openid_client_secret || "");
+      setOpenidCallbackUrl(settings.openid_callback_url || "");
     }
   }, [settings]);
 
@@ -92,6 +100,10 @@ export default function SettingsPage() {
       await apiRequest("PATCH", "/api/settings/login_description", { value: loginDescription });
       await apiRequest("PATCH", "/api/settings/login_bg_color", { value: loginBgColor });
       await apiRequest("PATCH", "/api/settings/enable_registration", { value: enableRegistration ? "true" : "false" });
+      await apiRequest("PATCH", "/api/settings/openid_issuer_url", { value: openidIssuerUrl });
+      await apiRequest("PATCH", "/api/settings/openid_client_id", { value: openidClientId });
+      await apiRequest("PATCH", "/api/settings/openid_client_secret", { value: openidClientSecret });
+      await apiRequest("PATCH", "/api/settings/openid_callback_url", { value: openidCallbackUrl });
 
       return true;
     },
@@ -256,6 +268,66 @@ export default function SettingsPage() {
                 data-testid="toggle-enable-registration"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5" />
+              SSO Settings
+            </CardTitle>
+            <CardDescription>Configure OpenID Connect Single Sign-On</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="openid-issuer">OpenID Issuer URL</Label>
+              <Input
+                id="openid-issuer"
+                value={openidIssuerUrl}
+                onChange={(e) => setOpenidIssuerUrl(e.target.value)}
+                placeholder="https://my.example.com"
+                data-testid="input-openid-issuer"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="openid-client-id">Client ID</Label>
+              <Input
+                id="openid-client-id"
+                value={openidClientId}
+                onChange={(e) => setOpenidClientId(e.target.value)}
+                placeholder="your-client-id"
+                data-testid="input-openid-client-id"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="openid-client-secret">Client Secret</Label>
+              <Input
+                id="openid-client-secret"
+                type="password"
+                value={openidClientSecret}
+                onChange={(e) => setOpenidClientSecret(e.target.value)}
+                placeholder="your-client-secret"
+                data-testid="input-openid-client-secret"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="openid-callback">Callback URL (Optional)</Label>
+              <Input
+                id="openid-callback"
+                value={openidCallbackUrl}
+                onChange={(e) => setOpenidCallbackUrl(e.target.value)}
+                placeholder="https://yourapp.com/api/auth/openid/callback"
+                data-testid="input-openid-callback"
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground p-3 bg-muted/50 rounded">
+              Fill in your OpenID Connect provider details to enable SSO login. Leave empty to disable SSO.
+            </p>
           </CardContent>
         </Card>
 

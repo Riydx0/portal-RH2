@@ -18,13 +18,14 @@ type AuthContextType = {
 };
 
 type LoginData = {
-  email: string;
+  username: string;
   password: string;
 };
 
 type RegisterData = {
   name: string;
   email: string;
+  username: string;
   password: string;
   role?: "admin" | "client";
 };

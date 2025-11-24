@@ -13,8 +13,8 @@ type SettingsData = Record<string, string>;
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [registerData, setRegisterData] = useState({ name: "", email: "", password: "" });
+  const [loginData, setLoginData] = useState({ username: "", password: "" });
+  const [registerData, setRegisterData] = useState({ name: "", email: "", username: "", password: "" });
   
   const { data: settings } = useQuery<SettingsData>({
     queryKey: ["/api/settings"],
@@ -64,15 +64,15 @@ export default function AuthPage() {
           {!isRegister ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-username">Username or Email</Label>
                 <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  id="login-username"
+                  type="text"
+                  placeholder="admin or admin@example.com"
+                  value={loginData.username}
+                  onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                   required
-                  data-testid="input-login-email"
+                  data-testid="input-login-username"
                 />
               </div>
               <div className="space-y-2">
@@ -161,6 +161,18 @@ export default function AuthPage() {
                   onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                   required
                   data-testid="input-register-email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-username">Username</Label>
+                <Input
+                  id="register-username"
+                  type="text"
+                  placeholder="johnsmith"
+                  value={registerData.username}
+                  onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                  required
+                  data-testid="input-register-username"
                 />
               </div>
               <div className="space-y-2">
