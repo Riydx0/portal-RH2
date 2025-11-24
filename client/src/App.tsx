@@ -42,6 +42,8 @@ import SoftwarePricingAdminPage from "@/pages/software-pricing-admin-page";
 import SubscriptionPlansPage from "@/pages/subscription-plans-page";
 import PricingPage from "@/pages/pricing-page";
 import EmailSettingsPage from "@/pages/email-settings-page";
+import SubmitTicketPage from "@/pages/submit-ticket-page";
+import RequestLicensePage from "@/pages/request-license-page";
 
 function Router() {
   return (
@@ -76,6 +78,8 @@ function Router() {
       <ProtectedRoute path="/pricing-admin" component={SubscriptionPlansPage} />
       <ProtectedRoute path="/software-pricing-admin" component={SoftwarePricingAdminPage} />
       <ProtectedRoute path="/email-settings" component={EmailSettingsPage} />
+      <ProtectedRoute path="/submit-ticket" component={SubmitTicketPage} />
+      <ProtectedRoute path="/request-license" component={RequestLicensePage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

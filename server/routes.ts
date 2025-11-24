@@ -1205,6 +1205,61 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Client endpoints for tickets
+  app.post("/api/tickets", requireAuth, async (req, res) => {
+    try {
+      const { title, description, priority } = req.body;
+      const ticket = await db.insert(tickets).values({
+        title,
+        description,
+        priority,
+        createdBy: req.user.id,
+        status: "open",
+      }).returning();
+      res.status(201).json(ticket[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.get("/api/my-tickets", requireAuth, async (req, res) => {
+    try {
+      const userTickets = await db.query.tickets.findMany({
+        where: (table) => eq(table.createdBy, req.user.id),
+      });
+      res.json(userTickets);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Client endpoints for license requests
+  app.post("/api/license-requests", requireAuth, async (req, res) => {
+    try {
+      const { softwareId } = req.body;
+      const license = await db.insert(licenses).values({
+        softwareId,
+        licenseKey: "PENDING_" + Date.now(),
+        assignedTo: req.user.email,
+        status: "available",
+      }).returning();
+      res.status(201).json(license[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.get("/api/my-licenses", requireAuth, async (req, res) => {
+    try {
+      const userLicenses = await db.query.licenses.findMany({
+        where: (table) => eq(table.assignedTo, req.user.email),
+      });
+      res.json(userLicenses);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

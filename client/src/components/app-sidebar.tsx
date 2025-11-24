@@ -74,9 +74,15 @@ export function AppSidebar() {
       show: true,
     },
     {
-      title: t('tickets', lang),
-      url: "/tickets",
+      title: "Submit Ticket",
+      url: "/submit-ticket",
       icon: Ticket,
+      show: true,
+    },
+    {
+      title: "Request License",
+      url: "/request-license",
+      icon: Key,
       show: true,
     },
   ];

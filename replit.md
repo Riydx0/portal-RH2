@@ -21,51 +21,34 @@ User wants SaaS model: Software as a Service with subscription tiers
 
 ## Recent Changes (November 24, 2025)
 
-### SaaS Subscription System Implementation
-- Added subscription plans (Basic: $29, Standard: $79, Professional: $199/month)
-- Subscription features: max users, max software items, max storage
-- User subscription management endpoints
-- Public pricing page at `/pricing` (accessible without login)
+### Client Features Implementation
+- **Submit Ticket Page**: Clients can submit support tickets with priority levels
+- **Request License Page**: Clients can request licenses for available software
+- **Client API Endpoints**:
+  - `POST /api/tickets` - Submit new ticket
+  - `GET /api/my-tickets` - Get user's tickets
+  - `POST /api/license-requests` - Request license for software
+  - `GET /api/my-licenses` - Get user's assigned licenses
+
+### Email Integration
+- Email service setup with Nodemailer
+- Email Settings admin page for SMTP configuration
+- Email templates for: welcome, subscriptions, invoices, support notifications
+- Test email functionality
+
+### SaaS Subscription System
+- Subscription plans (Basic: $29, Standard: $79, Professional: $199/month)
+- Admin pages for managing prices and subscription plans
+- Public pricing page at `/pricing`
 
 ### Finance Module
-- Invoices table for billing records
-- Software pricing table for per-item pricing
-- Invoices page for admin to view all invoices
-- Software Pricing page for admin to manage pricing
+- Invoices management
+- Software pricing administration
+- Subscription plans management
 
-### Database Schema Additions
-- `subscription_plans` table: Store pricing tiers
-- `subscriptions` table: Track user subscriptions
-- `invoices` table: Billing records
-- `software_pricing` table: Per-software pricing
-
-### API Endpoints Added
-- `GET /api/subscription-plans` - Get active subscription plans
-- `GET /api/subscriptions/me` - Get user's current subscription
-- `POST /api/subscriptions` - Create/update user subscription
-- `POST /api/subscriptions/:id/cancel` - Cancel subscription
-- `GET /api/invoices` - Get all invoices (admin)
-- `GET /api/invoices/my` - Get user's invoices
-- `GET /api/invoices/:id` - Get single invoice
-- `GET /api/software-pricing` - Get all active pricing
-- `GET /api/software-pricing/software/:softwareId` - Get pricing for specific software
-
-### Frontend Pages Added
-- `/pricing` - Public pricing page with feature comparison
-- `/invoices` - Admin invoices management
-- `/software-pricing` - Admin software pricing management
-
-### UI/Navigation Updates
-- Finance section in sidebar (Admin only)
-- Invoices and Software Pricing menu items
-- All pages support bilingual (English/Arabic)
-
-### Note: Stripe Integration
-User dismissed Stripe integration setup. If payment processing is needed later:
-- Create Stripe account at stripe.com
-- Set up API keys in environment variables
-- Implement `/api/checkout` endpoint for Stripe payment
-- Use Stripe webhook for subscription updates
+### Security Fix
+- Fixed password exposure in login/register endpoints
+- Removed password field from returned user data
 
 ## System Architecture
 
@@ -79,6 +62,17 @@ User dismissed Stripe integration setup. If payment processing is needed later:
 - Comprehensive component set (40+ components including dialogs, forms, tables, badges, etc.)
 - Full dark/light theme support with CSS variables
 - Accessible by design (ARIA compliant through Radix UI)
+
+**Pages for Clients**:
+- `/submit-ticket` - Submit support tickets
+- `/request-license` - Request software licenses
+- `/downloads` - Download available software
+
+**Pages for Admins**:
+- `/pricing-admin` - Manage subscription plans
+- `/software-pricing-admin` - Manage software pricing
+- `/invoices` - View and manage invoices
+- `/email-settings` - Configure SMTP for email notifications
 
 **Styling Strategy**:
 - TailwindCSS with custom design tokens
@@ -115,6 +109,9 @@ User dismissed Stripe integration setup. If payment processing is needed later:
 - File upload endpoint (`POST /api/upload`) with security validation
 - File download endpoint (`GET /api/download/:filename`) with path traversal protection
 - Settings endpoints (`GET /api/settings`, `GET /api/settings/:key`, `PATCH /api/settings/:key`) - admin-only
+- Email test endpoint (`POST /api/settings/test-email`) - admin-only
+- Client ticket endpoints (`POST /api/tickets`, `GET /api/my-tickets`)
+- Client license endpoints (`POST /api/license-requests`, `GET /api/my-licenses`)
 
 **Authentication & Authorization**:
 - Passport.js with multiple strategies:
@@ -128,6 +125,12 @@ User dismissed Stripe integration setup. If payment processing is needed later:
   - 7-day expiration
   - HTTP-only cookies with sameSite: 'lax'
   - Stored in PostgreSQL
+
+**Email Service**:
+- Nodemailer integration for sending emails
+- SMTP configuration via environment variables
+- Email templates for different notification types
+- Automatic emails sent for: new user welcome, subscription confirmation, invoices, ticket updates
 
 **Development vs Production**:
 - Development: Vite middleware integration for HMR
@@ -145,23 +148,23 @@ User dismissed Stripe integration setup. If payment processing is needed later:
    - Role types: admin, client
    - Email unique constraint
 
-2. **Subscription Plans Table** (NEW)
+2. **Subscription Plans Table**
    - Fields: id, name, plan (enum), price, maxUsers, maxSoftware, maxStorage
    - Features stored as text array
    - Stripe price ID for payment integration
    - Status: active/inactive
 
-3. **Subscriptions Table** (NEW)
+3. **Subscriptions Table**
    - Fields: id, userId (FK), planId (FK), status, stripeSubscriptionId
    - Tracks current subscription per user
    - Period dates and cancellation date
 
-4. **Invoices Table** (NEW)
+4. **Invoices Table**
    - Fields: id, invoiceNumber, clientId (FK), amount, currency, status
    - Status enum: draft, sent, paid, overdue, cancelled
    - Due date and paid date tracking
 
-5. **Software Pricing Table** (NEW)
+5. **Software Pricing Table**
    - Fields: id, softwareId (FK), price, currency, licenseType
    - Per-software pricing support
    - Active/inactive status
@@ -231,6 +234,16 @@ User dismissed Stripe integration setup. If payment processing is needed later:
 - Session secret via `SESSION_SECRET` environment variable
 - 7-day session expiration (configurable)
 - HTTP-only cookies with sameSite: 'lax'
+
+**Email Service**:
+- Nodemailer for SMTP email delivery
+- SMTP configuration via environment variables:
+  - `SMTP_HOST` - SMTP server hostname
+  - `SMTP_PORT` - SMTP server port (usually 587)
+  - `SMTP_USER` - SMTP authentication username
+  - `SMTP_PASSWORD` - SMTP authentication password
+  - `SMTP_FROM` - From email address for notifications
+  - `SMTP_SECURE` - Use TLS (true/false)
 
 **Third-party UI Libraries**:
 - Radix UI primitives (20+ primitive components for accessibility)
