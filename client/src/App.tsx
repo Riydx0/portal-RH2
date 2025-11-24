@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationsButton } from "@/components/notifications-button";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
@@ -27,6 +28,7 @@ import ChangePasswordPage from "@/pages/change-password-page";
 import ForgotPasswordPage from "@/pages/forgot-password-page";
 import GroupsPage from "@/pages/groups-page";
 import LanguageSettingsPage from "@/pages/language-settings-page";
+import LogsSettingsPage from "@/pages/logs-settings-page";
 import { initLanguage } from "@/lib/i18n";
 
 function Router() {
@@ -49,6 +51,7 @@ function Router() {
       <ProtectedRoute path="/settings/branding" component={BrandingSettingsPage} />
       <ProtectedRoute path="/settings/sso" component={SSOSettingsPage} />
       <ProtectedRoute path="/settings/language" component={LanguageSettingsPage} />
+      <ProtectedRoute path="/settings/logs" component={LogsSettingsPage} />
       <ProtectedRoute path="/settings/change-password" component={ChangePasswordPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
@@ -76,8 +79,10 @@ function AppContent() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between p-2 border-b bg-background">
+          <header className="flex items-center justify-between p-2 border-b bg-background gap-2 px-4">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <div className="flex-1" />
+            <NotificationsButton />
           </header>
           <main className="flex-1 overflow-auto">
             <Router />

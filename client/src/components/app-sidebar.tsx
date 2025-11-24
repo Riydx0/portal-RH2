@@ -112,6 +112,11 @@ export function AppSidebar() {
       show: isAdmin,
     },
     {
+      title: "Activity Logs",
+      url: "/settings/logs",
+      show: isAdmin,
+    },
+    {
       title: "Language",
       url: "/settings/language",
       show: true,
