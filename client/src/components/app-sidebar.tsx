@@ -122,6 +122,12 @@ export function AppSidebar() {
       show: isAdmin,
     },
     {
+      title: "WireGuard",
+      url: "/wireguard",
+      icon: Lock,
+      show: isAdmin,
+    },
+    {
       title: t('firewall', lang),
       url: "/firewall",
       icon: Shield,

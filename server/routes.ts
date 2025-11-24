@@ -1260,6 +1260,104 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // WireGuard endpoints
+  app.post("/api/vpn/:id/generate-keys", requireAdmin, async (req, res) => {
+    try {
+      const { generateWireGuardPair } = await import("./wireguard.js");
+      const keys = await generateWireGuardPair();
+      res.json(keys);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/vpn/:id/generate-config", requireAdmin, async (req, res) => {
+    try {
+      const { serverName, privateKey, clientPublicKey } = req.body;
+      const vpnId = parseInt(req.params.id);
+      
+      const vpnConfig = await db.query.vpnConfigs.findFirst({
+        where: (table) => eq(table.id, vpnId),
+      });
+
+      if (!vpnConfig) {
+        return res.status(404).send("VPN configuration not found");
+      }
+
+      const { generateWireGuardConfig } = await import("./wireguard.js");
+      const config = await generateWireGuardConfig(
+        serverName || vpnConfig.name,
+        vpnConfig.serverAddress,
+        vpnConfig.port,
+        vpnConfig.password || "",
+        vpnConfig.certificate || "",
+        undefined,
+        clientPublicKey
+      );
+
+      res.json({ config });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/vpn/:id/generate-client-config", requireAdmin, async (req, res) => {
+    try {
+      const { clientPrivateKey, clientPublicKey, serverPublicKey } = req.body;
+      const vpnId = parseInt(req.params.id);
+
+      const vpnConfig = await db.query.vpnConfigs.findFirst({
+        where: (table) => eq(table.id, vpnId),
+      });
+
+      if (!vpnConfig) {
+        return res.status(404).send("VPN configuration not found");
+      }
+
+      const { generateClientConfig } = await import("./wireguard.js");
+      const clientConfig = await generateClientConfig(
+        clientPrivateKey,
+        clientPublicKey,
+        serverPublicKey,
+        vpnConfig.serverAddress,
+        vpnConfig.port
+      );
+
+      res.json({ config: clientConfig });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/vpn/:id/generate-qr", requireAdmin, async (req, res) => {
+    try {
+      const { config } = req.body;
+      const { generateQRCode } = await import("./wireguard.js");
+      const qrDataUrl = await generateQRCode(config);
+      res.json({ qr: qrDataUrl });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/vpn/:id/download/:type", requireAdmin, async (req, res) => {
+    try {
+      const { config } = req.query;
+      const { type } = req.params;
+
+      if (!config || typeof config !== "string") {
+        return res.status(400).send("Invalid config");
+      }
+
+      const filename = `wireguard-${type}-${Date.now()}.conf`;
+      res.setHeader("Content-Type", "application/octet-stream");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(config);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
