@@ -1131,6 +1131,65 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post("/api/software-pricing", requireAdmin, async (req, res) => {
+    try {
+      const data = insertSoftwarePricingSchema.parse(req.body);
+      const created = await db.insert(softwarePricing).values(data).returning();
+      res.json(created[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/software-pricing/:id", requireAdmin, async (req, res) => {
+    try {
+      await db
+        .delete(softwarePricing)
+        .where(eq(softwarePricing.id, parseInt(req.params.id)));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Subscription Plans CRUD
+  app.post("/api/subscription-plans", requireAdmin, async (req, res) => {
+    try {
+      const data = insertSubscriptionPlanSchema.parse(req.body);
+      const created = await db
+        .insert(subscriptionPlans)
+        .values(data)
+        .returning();
+      res.json(created[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/subscription-plans/:id", requireAdmin, async (req, res) => {
+    try {
+      const updated = await db
+        .update(subscriptionPlans)
+        .set(req.body)
+        .where(eq(subscriptionPlans.id, parseInt(req.params.id)))
+        .returning();
+      res.json(updated[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/subscription-plans/:id", requireAdmin, async (req, res) => {
+    try {
+      await db
+        .delete(subscriptionPlans)
+        .where(eq(subscriptionPlans.id, parseInt(req.params.id)));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

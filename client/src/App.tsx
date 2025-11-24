@@ -38,6 +38,8 @@ import VpnPage from "@/pages/vpn-page";
 import FirewallPage from "@/pages/firewall-page";
 import InvoicesPage from "@/pages/invoices-page";
 import SoftwarePricingPage from "@/pages/software-pricing-page";
+import SoftwarePricingAdminPage from "@/pages/software-pricing-admin-page";
+import SubscriptionPlansPage from "@/pages/subscription-plans-page";
 import PricingPage from "@/pages/pricing-page";
 
 function Router() {
@@ -70,6 +72,8 @@ function Router() {
       <ProtectedRoute path="/firewall" component={FirewallPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/software-pricing" component={SoftwarePricingPage} />
+      <ProtectedRoute path="/pricing-admin" component={SubscriptionPlansPage} />
+      <ProtectedRoute path="/software-pricing-admin" component={SoftwarePricingAdminPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

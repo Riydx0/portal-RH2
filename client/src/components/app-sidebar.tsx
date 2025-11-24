@@ -146,8 +146,14 @@ export function AppSidebar() {
     },
     {
       title: t('softwarePricing', lang),
-      url: "/software-pricing",
+      url: "/software-pricing-admin",
       icon: DollarSign,
+      show: isAdmin,
+    },
+    {
+      title: "Subscription Plans",
+      url: "/pricing-admin",
+      icon: BarChart3,
       show: isAdmin,
     },
   ];
