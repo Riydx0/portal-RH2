@@ -70,6 +70,29 @@ export const ticketComments = pgTable("ticket_comments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const clients = pgTable("clients", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  company: text("company"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const devices = pgTable("devices", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  deviceName: text("device_name").notNull(),
+  serialNumber: text("serial_number"),
+  model: text("model"),
+  manufacturer: text("manufacturer"),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),
   assignedTickets: many(tickets, { relationName: "assignedTo" }),
@@ -120,6 +143,21 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
   }),
 }));
 
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  user: one(users, {
+    fields: [clients.userId],
+    references: [users.id],
+  }),
+  devices: many(devices),
+}));
+
+export const devicesRelations = relations(devices, ({ one }) => ({
+  client: one(clients, {
+    fields: [devices.clientId],
+    references: [clients.id],
+  }),
+}));
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -154,6 +192,18 @@ export const insertTicketCommentSchema = createInsertSchema(ticketComments).omit
   createdAt: true,
 });
 
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDeviceSchema = createInsertSchema(devices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -171,3 +221,9 @@ export type InsertTicket = z.infer<typeof insertTicketSchema>;
 
 export type TicketComment = typeof ticketComments.$inferSelect;
 export type InsertTicketComment = z.infer<typeof insertTicketCommentSchema>;
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
+
+export type Device = typeof devices.$inferSelect;
+export type InsertDevice = z.infer<typeof insertDeviceSchema>;

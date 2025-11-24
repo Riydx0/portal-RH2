@@ -5,6 +5,8 @@ import {
   licenses,
   tickets,
   ticketComments,
+  clients,
+  devices,
   User,
   InsertUser,
   Category,
@@ -17,6 +19,10 @@ import {
   InsertTicket,
   TicketComment,
   InsertTicketComment,
+  Client,
+  InsertClient,
+  Device,
+  InsertDevice,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
