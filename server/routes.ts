@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { db } from "./db";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import {
   insertUserSchema,
   insertCategorySchema,
@@ -11,6 +14,26 @@ import {
   insertTicketSchema,
   insertTicketCommentSchema,
 } from "@shared/schema";
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
+  },
+});
+
+const upload = multer({
+  storage: multerStorage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+});
 
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
@@ -28,6 +51,37 @@ function requireAdmin(req: any, res: any, next: any) {
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  app.post("/api/upload", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).send("No file uploaded");
+      }
+      res.json({
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        path: `/api/download/${req.file.filename}`,
+        size: req.file.size,
+      });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/download/:filename", requireAuth, (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(uploadsDir, filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send("File not found");
+      }
+      
+      res.download(filePath);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
 
   app.get("/api/stats", requireAuth, async (req, res) => {
     try {

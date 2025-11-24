@@ -32,6 +32,8 @@ export const software = pgTable("software", {
   categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
   description: text("description"),
   downloadUrl: text("download_url"),
+  filePath: text("file_path"),
+  fileSize: integer("file_size"),
   version: text("version"),
   platform: platformEnum("platform").notNull().default("Both"),
   isActive: boolean("is_active").notNull().default(true),
