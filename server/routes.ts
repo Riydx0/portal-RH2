@@ -41,6 +41,7 @@ import {
   licenses,
   tickets,
   apiKeys,
+  categories,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
