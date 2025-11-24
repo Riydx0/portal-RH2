@@ -323,11 +323,23 @@ export function registerRoutes(app: Express): Server {
     try {
       const { isShared, ...data } = req.body;
       const id = parseInt(req.params.id);
+      
+      // Get original data first to check current state
+      const original = await db.query.software.findFirst({
+        where: (software, { eq }) => eq(software.id, id),
+      });
+      
+      if (!original) {
+        return res.status(404).send("Software not found");
+      }
+      
+      // Update main data
       const sw = await storage.updateSoftware(id, data);
       
       if (isShared !== undefined) {
         const updateData: any = { isShared };
         
+        // Enable sharing: create share code if not exists
         if (isShared && sw.filePath && !sw.shareCode) {
           const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           updateData.shareCode = secretCode;
@@ -338,9 +350,14 @@ export function registerRoutes(app: Express): Server {
             createdBy: req.user!.id,
             permissions: "download",
           });
-        } else if (!isShared && sw.shareCode) {
+        } 
+        // Disable sharing: remove share code
+        else if (!isShared && (sw.shareCode || original.shareCode)) {
           updateData.shareCode = null;
-          await db.delete(shareLinks).where(eq(shareLinks.secretCode, sw.shareCode));
+          const codeToDelete = sw.shareCode || original.shareCode;
+          if (codeToDelete) {
+            await db.delete(shareLinks).where(eq(shareLinks.secretCode, codeToDelete));
+          }
         }
         
         const updated = await db.update(software)
