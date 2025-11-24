@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Server, Shield, Loader2 } from "lucide-react";
 
+type SettingsData = Record<string, string>;
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ name: "", email: "", password: "" });
+  
+  const { data: settings } = useQuery<SettingsData>({
+    queryKey: ["/api/settings"],
+  });
+
+  const loginTitle = settings?.login_title || "IT Portal";
+  const loginDescription = settings?.login_description || "Manage your IT services, software, licenses, and support tickets";
+  const loginBgColor = settings?.login_bg_color || "#f5f5f5";
+  const logoUrl = settings?.logo_url || "";
 
   if (user) {
     return <Redirect to="/" />;
@@ -28,16 +40,24 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background grid lg:grid-cols-2">
+    <div className="min-h-screen grid lg:grid-cols-2" style={{ backgroundColor: loginBgColor }}>
       <div className="flex items-center justify-center p-8">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
-              <Server className="h-8 w-8 text-primary" />
-              <CardTitle className="text-3xl font-semibold">IT Portal</CardTitle>
+              {logoUrl ? (
+                <img
+                  src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
+                  alt="Logo"
+                  className="h-8 w-8 object-contain"
+                />
+              ) : (
+                <Server className="h-8 w-8 text-primary" />
+              )}
+              <CardTitle className="text-3xl font-semibold">{loginTitle}</CardTitle>
             </div>
             <CardDescription>
-              Manage your IT services, software, licenses, and support tickets
+              {loginDescription}
             </CardDescription>
           </CardHeader>
           <CardContent>

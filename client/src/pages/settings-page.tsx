@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings as SettingsIcon, Upload, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Settings as SettingsIcon, Upload, Save, Eye } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +15,9 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [siteName, setSiteName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [loginTitle, setLoginTitle] = useState("");
+  const [loginDescription, setLoginDescription] = useState("");
+  const [loginBgColor, setLoginBgColor] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
@@ -25,6 +29,9 @@ export default function SettingsPage() {
     if (settings) {
       setSiteName(settings.site_name || "");
       setLogoUrl(settings.logo_url || "");
+      setLoginTitle(settings.login_title || "IT Portal");
+      setLoginDescription(settings.login_description || "Manage your IT services, software, licenses, and support tickets");
+      setLoginBgColor(settings.login_bg_color || "#f5f5f5");
     }
   }, [settings]);
 
@@ -78,6 +85,9 @@ export default function SettingsPage() {
 
       await apiRequest("PATCH", "/api/settings/site_name", { value: siteName });
       await apiRequest("PATCH", "/api/settings/logo_url", { value: finalLogoUrl });
+      await apiRequest("PATCH", "/api/settings/login_title", { value: loginTitle });
+      await apiRequest("PATCH", "/api/settings/login_description", { value: loginDescription });
+      await apiRequest("PATCH", "/api/settings/login_bg_color", { value: loginBgColor });
 
       return true;
     },
@@ -179,29 +189,95 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Login Page Settings
+            </CardTitle>
+            <CardDescription>Customize the login page appearance</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-title">Login Page Title</Label>
+              <Input
+                id="login-title"
+                value={loginTitle}
+                onChange={(e) => setLoginTitle(e.target.value)}
+                placeholder="IT Portal"
+                data-testid="input-login-title"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="login-description">Login Page Description</Label>
+              <Textarea
+                id="login-description"
+                value={loginDescription}
+                onChange={(e) => setLoginDescription(e.target.value)}
+                placeholder="Manage your IT services, software, licenses, and support tickets"
+                data-testid="input-login-description"
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="login-bg-color">Background Color</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  id="login-bg-color"
+                  type="color"
+                  value={loginBgColor}
+                  onChange={(e) => setLoginBgColor(e.target.value)}
+                  data-testid="input-login-bg-color"
+                  className="h-12 w-20"
+                />
+                <Input
+                  type="text"
+                  value={loginBgColor}
+                  onChange={(e) => setLoginBgColor(e.target.value)}
+                  placeholder="#f5f5f5"
+                  data-testid="input-login-bg-color-text"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Preview</CardTitle>
             <CardDescription>See how your changes will look</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-6 border rounded-md bg-background">
-                <div className="flex items-center gap-3">
-                  {logoUrl && (
-                    <img
-                      src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
-                      alt="Logo"
-                      className="h-10 w-10 object-contain"
-                    />
-                  )}
-                  <div>
-                    <h2 className="text-xl font-semibold">{siteName || "IT Portal"}</h2>
-                    <p className="text-sm text-muted-foreground">Service Management</p>
-                  </div>
+          <CardContent className="space-y-4">
+            <div className="p-6 border rounded-md bg-background">
+              <div className="flex items-center gap-3">
+                {logoUrl && (
+                  <img
+                    src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
+                    alt="Logo"
+                    className="h-10 w-10 object-contain"
+                  />
+                )}
+                <div>
+                  <h2 className="text-xl font-semibold">{siteName || "IT Portal"}</h2>
+                  <p className="text-sm text-muted-foreground">Service Management</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                This is how your branding will appear in the application header.
-              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This is how your branding will appear in the application header.
+            </p>
+            <div className="border-t pt-4">
+              <p className="text-xs text-muted-foreground mb-2">Login Page Preview:</p>
+              <div
+                className="p-6 rounded-md border"
+                style={{ backgroundColor: loginBgColor }}
+              >
+                <div className="bg-white dark:bg-slate-900 rounded-lg p-4">
+                  <h3 className="font-semibold text-lg">{loginTitle}</h3>
+                  <p className="text-sm text-muted-foreground mt-2">{loginDescription}</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
