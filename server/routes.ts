@@ -297,7 +297,7 @@ export function registerRoutes(app: Express): Server {
       const parsed = insertSoftwareSchema.parse(data);
       const sw = await storage.createSoftware(parsed);
       
-      if (isShared && sw.filePath) {
+      if (isShared) {
         const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
         await db.update(software)
           .set({ isShared: true, shareCode: secretCode })
@@ -324,7 +324,7 @@ export function registerRoutes(app: Express): Server {
       const { isShared, ...data } = req.body;
       const id = parseInt(req.params.id);
       
-      // Get original data first to check current state
+      // Get original data first
       const original = await db.query.software.findFirst({
         where: (software, { eq }) => eq(software.id, id),
       });
@@ -333,14 +333,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Software not found");
       }
       
-      // Update main data
-      const sw = await storage.updateSoftware(id, data);
+      // Prepare update data
+      const updateData: any = { ...data };
       
       if (isShared !== undefined) {
-        const updateData: any = { isShared };
+        updateData.isShared = isShared;
         
         // Enable sharing: create share code if not exists
-        if (isShared && sw.filePath && !sw.shareCode) {
+        if (isShared && !original.shareCode) {
           const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           updateData.shareCode = secretCode;
           
@@ -352,23 +352,20 @@ export function registerRoutes(app: Express): Server {
           });
         } 
         // Disable sharing: remove share code
-        else if (!isShared && (sw.shareCode || original.shareCode)) {
+        else if (!isShared && original.shareCode) {
           updateData.shareCode = null;
-          const codeToDelete = sw.shareCode || original.shareCode;
-          if (codeToDelete) {
-            await db.delete(shareLinks).where(eq(shareLinks.secretCode, codeToDelete));
-          }
+          await db.delete(shareLinks).where(eq(shareLinks.secretCode, original.shareCode));
         }
-        
-        const updated = await db.update(software)
-          .set(updateData)
-          .where(eq(software.id, id))
-          .returning();
-        
-        return res.json(updated[0]);
       }
       
-      res.json(sw);
+      // Update everything at once
+      const updated = await db
+        .update(software)
+        .set(updateData)
+        .where(eq(software.id, id))
+        .returning();
+      
+      return res.json(updated[0]);
     } catch (error: any) {
       res.status(500).send(error.message);
     }
