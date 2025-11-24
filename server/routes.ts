@@ -17,7 +17,9 @@ import {
   settings,
   externalLinks,
   notifications,
+  shareLinks,
   insertExternalLinkSchema,
+  insertShareLinkSchema,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -608,6 +610,94 @@ export function registerRoutes(app: Express): Server {
       }
       
       res.json(result[0]);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Share Links
+  app.post("/api/share-links", requireAdmin, async (req, res) => {
+    try {
+      const { softwareId } = req.body;
+      
+      if (!softwareId) {
+        return res.status(400).send("Software ID required");
+      }
+
+      // Generate random secret code (8 characters)
+      const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      const result = await db
+        .insert(shareLinks)
+        .values({
+          softwareId,
+          secretCode,
+          createdBy: req.user!.id,
+        })
+        .returning();
+      
+      res.status(201).json({
+        ...result[0],
+        shareUrl: `/download/${secretCode}`,
+      });
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.get("/api/share-links/:softwareId", requireAdmin, async (req, res) => {
+    try {
+      const result = await db
+        .select()
+        .from(shareLinks)
+        .where(eq(shareLinks.softwareId, parseInt(req.params.softwareId)));
+      
+      res.json(result.map(link => ({
+        ...link,
+        shareUrl: `/download/${link.secretCode}`,
+      })));
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.delete("/api/share-links/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(shareLinks).where(eq(shareLinks.id, parseInt(req.params.id)));
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/share-download", async (req, res) => {
+    try {
+      const { secretCode } = req.body;
+      
+      if (!secretCode) {
+        return res.status(400).send("Secret code required");
+      }
+
+      const [link] = await db
+        .select()
+        .from(shareLinks)
+        .where(eq(shareLinks.secretCode, secretCode));
+      
+      if (!link) {
+        return res.status(404).send("Invalid secret code");
+      }
+
+      // Get software details
+      const [sw] = await db
+        .select()
+        .from(software)
+        .where(eq(software.id, link.softwareId));
+      
+      if (!sw || !sw.filePath) {
+        return res.status(404).send("File not found");
+      }
+
+      res.json({ filePath: sw.filePath, name: sw.name });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

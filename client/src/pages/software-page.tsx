@@ -31,7 +31,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, Plus, Pencil, Trash2, Search, Upload, Download, ExternalLink } from "lucide-react";
+import { HardDrive, Plus, Pencil, Trash2, Search, Upload, Download, ExternalLink, Share2, Copy, Check } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -59,6 +59,9 @@ export default function SoftwarePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareData, setShareData] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [formData, setFormData] = useState<InsertSoftware & { filePath?: string; fileSize?: number }>({
     name: "",
     categoryId: 0,
@@ -76,6 +79,55 @@ export default function SoftwarePage() {
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const shareMutation = useMutation({
+    mutationFn: async (softwareId: number) => {
+      const response = await fetch("/api/share-links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ softwareId }),
+      });
+      if (!response.ok) throw new Error("Failed to create share link");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setShareData(data);
+      toast({
+        title: "Share link created!",
+        description: "Copy the secret code to share with others",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleShare = (sw: SoftwareWithCategory) => {
+    if (!sw.filePath) {
+      toast({
+        title: "Error",
+        description: "Software must have an uploaded file to share",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShareData(null);
+    setCopiedCode(false);
+    setIsShareOpen(true);
+    shareMutation.mutate(sw.id);
+  };
+
+  const copyToClipboard = () => {
+    if (shareData?.secretCode) {
+      navigator.clipboard.writeText(shareData.secretCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -361,6 +413,17 @@ export default function SoftwarePage() {
                               <Download className="h-4 w-4" />
                             </Button>
                           )}
+                          {sw.filePath && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleShare(sw)}
+                              data-testid={`button-share-${sw.id}`}
+                              title="Create a shareable link with secret code"
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -395,6 +458,57 @@ export default function SoftwarePage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Software</DialogTitle>
+            <DialogDescription>Create a secure share link with a secret code</DialogDescription>
+          </DialogHeader>
+          {shareMutation.isPending ? (
+            <div className="flex justify-center py-8">
+              <div className="text-muted-foreground">Generating share link...</div>
+            </div>
+          ) : shareData ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Share Link</p>
+                  <div className="flex gap-2">
+                    <code className="flex-1 p-2 bg-background rounded text-sm font-mono break-all">
+                      {shareData.shareUrl}
+                    </code>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Secret Code</p>
+                  <div className="flex gap-2">
+                    <code className="flex-1 p-2 bg-background rounded text-sm font-mono font-bold tracking-widest">
+                      {shareData.secretCode}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyToClipboard}
+                      className="flex-shrink-0"
+                      data-testid="button-copy-code"
+                    >
+                      {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800 text-sm text-blue-900 dark:text-blue-100">
+                <p className="font-medium mb-1">How to share:</p>
+                <p>Give the secret code to your users. They can enter it on the share download page to get the file.</p>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setIsShareOpen(false)}>Done</Button>
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

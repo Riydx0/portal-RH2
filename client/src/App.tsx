@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import ShareDownloadPage from "@/pages/share-download-page";
 import DashboardPage from "@/pages/dashboard-page";
 import CategoriesPage from "@/pages/categories-page";
 import SoftwarePage from "@/pages/software-page";
@@ -24,6 +25,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/download/:secretCode" component={ShareDownloadPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
       <ProtectedRoute path="/categories" component={CategoriesPage} />
@@ -42,13 +44,14 @@ function Router() {
 function AppContent() {
   const [location] = useLocation();
   const isAuthPage = location === "/auth";
+  const isShareDownload = location.startsWith("/download/");
 
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
 
-  if (isAuthPage) {
+  if (isAuthPage || isShareDownload) {
     return <Router />;
   }
 

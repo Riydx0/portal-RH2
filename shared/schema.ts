@@ -124,6 +124,15 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const shareLinks = pgTable("share_links", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
+  secretCode: text("secret_code").notNull().unique(),
+  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),
   assignedTickets: many(tickets, { relationName: "assignedTo" }),
@@ -251,6 +260,11 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertShareLinkSchema = createInsertSchema(shareLinks).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -283,3 +297,6 @@ export type InsertExternalLink = z.infer<typeof insertExternalLinkSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type ShareLink = typeof shareLinks.$inferSelect;
+export type InsertShareLink = z.infer<typeof insertShareLinkSchema>;
