@@ -1,0 +1,196 @@
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
+import {
+  LayoutDashboard,
+  FolderTree,
+  HardDrive,
+  Key,
+  Ticket,
+  Download,
+  Server,
+  LogOut,
+  Shield,
+  User,
+} from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+
+export function AppSidebar() {
+  const { user, logoutMutation } = useAuth();
+  const [location] = useLocation();
+
+  const isAdmin = user?.role === "admin";
+  const isTech = user?.role === "tech" || user?.role === "admin";
+
+  const menuItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      title: "Downloads",
+      url: "/downloads",
+      icon: Download,
+      show: true,
+    },
+    {
+      title: "Tickets",
+      url: "/tickets",
+      icon: Ticket,
+      show: true,
+    },
+  ];
+
+  const adminItems = [
+    {
+      title: "Categories",
+      url: "/categories",
+      icon: FolderTree,
+      show: isAdmin,
+    },
+    {
+      title: "Software",
+      url: "/software",
+      icon: HardDrive,
+      show: isAdmin,
+    },
+    {
+      title: "Licenses",
+      url: "/licenses",
+      icon: Key,
+      show: isAdmin,
+    },
+  ];
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "default";
+      case "tech":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <Sidebar>
+      <SidebarHeader className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center h-10 w-10 rounded-md bg-primary">
+            <Server className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">IT Portal</h2>
+            <p className="text-xs text-muted-foreground">Service Management</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) =>
+                item.show ? (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={location === item.url}>
+                      <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) =>
+                  item.show ? (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={location === item.url}>
+                        <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ) : null
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        <div className="space-y-3">
+          <Separator />
+          <div className="flex items-center gap-3 px-2">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                {user ? getInitials(user.name) : "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.name}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant={getRoleBadgeVariant(user?.role || "client")} className="text-xs">
+                  {user?.role === "admin" ? (
+                    <Shield className="h-3 w-3 mr-1" />
+                  ) : (
+                    <User className="h-3 w-3 mr-1" />
+                  )}
+                  {user?.role}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+            data-testid="button-logout"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
