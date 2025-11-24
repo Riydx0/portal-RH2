@@ -6,6 +6,7 @@ import { db } from "./db";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { z } from "zod";
 import {
   insertUserSchema,
   insertCategorySchema,
