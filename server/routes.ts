@@ -504,19 +504,26 @@ export function registerRoutes(app: Express): Server {
   app.patch("/api/settings/:key", requireAdmin, async (req, res) => {
     try {
       const updateSchema = z.object({
-        value: z.string().max(1000),
+        value: z.string().max(1000).optional().nullable(),
       });
       
       const { value } = updateSchema.parse(req.body);
+      const key = req.params.key;
       
+      // First try to update, if nothing updated then insert
       const result = await db
         .update(settings)
-        .set({ value, updatedAt: new Date() })
-        .where(eq(settings.key, req.params.key))
+        .set({ value: value || "", updatedAt: new Date() })
+        .where(eq(settings.key, key))
         .returning();
       
       if (result.length === 0) {
-        return res.status(404).send("Setting not found");
+        // If not found, insert it
+        const insertResult = await db
+          .insert(settings)
+          .values({ key, value: value || "" })
+          .returning();
+        return res.json(insertResult[0]);
       }
       
       res.json(result[0]);
