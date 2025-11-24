@@ -319,6 +319,7 @@ export default function SoftwarePage() {
       version: sw.version || "",
       platform: sw.platform,
       isActive: sw.isActive,
+      isShared: (sw as any).isShared || false,
     });
     setIsEditOpen(true);
   };

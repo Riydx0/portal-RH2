@@ -53,7 +53,7 @@ export interface IStorage {
   getAllSoftware(): Promise<Software[]>;
   getSoftwareById(id: number): Promise<Software | undefined>;
   createSoftware(software: InsertSoftware): Promise<Software>;
-  updateSoftware(id: number, data: Partial<InsertSoftware>): Promise<Software>;
+  updateSoftware(id: number, data: Partial<InsertSoftware> & { isShared?: boolean; shareCode?: string | null }): Promise<Software>;
   deleteSoftware(id: number): Promise<void>;
 
   getAllLicenses(): Promise<License[]>;
@@ -190,7 +190,7 @@ export class DatabaseStorage implements IStorage {
     return sw;
   }
 
-  async updateSoftware(id: number, data: Partial<InsertSoftware>): Promise<Software> {
+  async updateSoftware(id: number, data: Partial<InsertSoftware> & { isShared?: boolean; shareCode?: string | null }): Promise<Software> {
     const [sw] = await db
       .update(software)
       .set({ ...data, createdAt: undefined, updatedAt: new Date() } as any)
