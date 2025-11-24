@@ -38,6 +38,7 @@ import {
   BarChart3,
   FileText,
   Globe,
+  DollarSign,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const [resourceOpen, setResourceOpen] = useState(false);
   const [infrastructureOpen, setInfrastructureOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
+  const [financeOpen, setFinanceOpen] = useState(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -131,6 +133,21 @@ export function AppSidebar() {
       title: t('groups', lang),
       url: "/groups",
       icon: Shield,
+      show: isAdmin,
+    },
+  ];
+
+  const financeItems = [
+    {
+      title: t('invoices', lang),
+      url: "/invoices",
+      icon: FileText,
+      show: isAdmin,
+    },
+    {
+      title: t('softwarePricing', lang),
+      url: "/software-pricing",
+      icon: DollarSign,
       show: isAdmin,
     },
   ];
@@ -246,7 +263,7 @@ export function AppSidebar() {
         <Separator className="my-2" />
 
         {/* Administration Section */}
-        {isAdmin && (resourceItems.some(i => i.show) || infrastructureItems.some(i => i.show) || teamItems.some(i => i.show)) && (
+        {isAdmin && (resourceItems.some(i => i.show) || infrastructureItems.some(i => i.show) || teamItems.some(i => i.show) || financeItems.some(i => i.show)) && (
           <>
             {/* Resource Management */}
             {resourceItems.some(i => i.show) && (
@@ -340,6 +357,43 @@ export function AppSidebar() {
                       {teamOpen && (
                         <SidebarMenuSub>
                           {teamItems.map((item) =>
+                            item.show ? (
+                              <SidebarMenuSubItem key={item.title}>
+                                <SidebarMenuSubButton asChild isActive={location === item.url}>
+                                  <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                                    <item.icon className="h-4 w-4" />
+                                    <span>{item.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ) : null
+                          )}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+
+            {/* Finance */}
+            {financeItems.some(i => i.show) && (
+              <SidebarGroup className="py-2">
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton 
+                        onClick={() => setFinanceOpen(!financeOpen)}
+                        data-testid="button-finance"
+                        className="font-semibold text-sm"
+                      >
+                        <DollarSign className="h-4 w-4" />
+                        <span>{t('finance', lang)}</span>
+                        <ChevronRight className={`h-4 w-4 ml-auto transition-transform duration-200 ${financeOpen ? 'rotate-90' : ''}`} />
+                      </SidebarMenuButton>
+                      {financeOpen && (
+                        <SidebarMenuSub>
+                          {financeItems.map((item) =>
                             item.show ? (
                               <SidebarMenuSubItem key={item.title}>
                                 <SidebarMenuSubButton asChild isActive={location === item.url}>

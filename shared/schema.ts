@@ -10,6 +10,7 @@ export const licenseStatusEnum = pgEnum("license_status", ["available", "in-use"
 export const platformEnum = pgEnum("platform", ["Windows", "Mac", "Both"]);
 export const networkStatusEnum = pgEnum("network_status", ["active", "inactive", "maintenance", "error"]);
 export const firewallStatusEnum = pgEnum("firewall_status", ["enabled", "disabled", "monitoring"]);
+export const invoiceStatusEnum = pgEnum("invoice_status", ["draft", "sent", "paid", "overdue", "cancelled"]);
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -192,6 +193,32 @@ export const firewallRules = pgTable("firewall_rules", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const softwarePricing = pgTable("software_pricing", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
+  price: integer("price").notNull(), // في سنتات
+  currency: text("currency").notNull().default("USD"),
+  licenseType: text("license_type"), // annual, perpetual, subscription, etc
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const invoices = pgTable("invoices", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  clientId: integer("client_id").references(() => clients.id, { onDelete: "set null" }),
+  amount: integer("amount").notNull(), // في سنتات
+  currency: text("currency").notNull().default("USD"),
+  status: invoiceStatusEnum("status").notNull().default("draft"),
+  description: text("description"),
+  dueDate: timestamp("due_date"),
+  paidDate: timestamp("paid_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Schemas & Types
 export const insertNetworkSchema = createInsertSchema(networks).omit({
   id: true,
@@ -210,6 +237,24 @@ export const insertFirewallRuleSchema = createInsertSchema(firewallRules).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+export const insertSoftwarePricingSchema = createInsertSchema(softwarePricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SoftwarePricing = typeof softwarePricing.$inferSelect;
+export type InsertSoftwarePricing = z.infer<typeof insertSoftwarePricingSchema>;
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),

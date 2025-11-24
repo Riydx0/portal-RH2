@@ -36,6 +36,8 @@ import DashboardSettingsPage from "@/pages/dashboard-settings-page";
 import NetworksPage from "@/pages/networks-page";
 import VpnPage from "@/pages/vpn-page";
 import FirewallPage from "@/pages/firewall-page";
+import InvoicesPage from "@/pages/invoices-page";
+import SoftwarePricingPage from "@/pages/software-pricing-page";
 
 function Router() {
   return (
@@ -64,6 +66,8 @@ function Router() {
       <ProtectedRoute path="/networks" component={NetworksPage} />
       <ProtectedRoute path="/vpn" component={VpnPage} />
       <ProtectedRoute path="/firewall" component={FirewallPage} />
+      <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/software-pricing" component={SoftwarePricingPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

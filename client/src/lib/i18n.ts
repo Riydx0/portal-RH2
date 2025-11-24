@@ -34,6 +34,11 @@ const translations = {
     networks: 'Networks',
     vpn: 'VPN Settings',
     firewall: 'Firewall Rules',
+    finance: 'Finance',
+    invoices: 'Invoices',
+    pricing: 'Pricing',
+    softwarePricing: 'Software Pricing',
+    billing: 'Billing',
 
     // Auth Page
     usernameOrEmail: 'Username or Email',
@@ -69,7 +74,6 @@ const translations = {
     clientOnly: 'Client Only',
     ofUsers: 'of users',
     name: 'Name',
-    email: 'Email',
     role: 'Role',
     joined: 'Joined',
     actions: 'Actions',
@@ -176,6 +180,11 @@ const translations = {
     networks: 'الشبكات',
     vpn: 'إعدادات VPN',
     firewall: 'قواعد جدار الحماية',
+    finance: 'المالية',
+    invoices: 'الفواتير',
+    pricing: 'التسعير',
+    softwarePricing: 'تسعير البرامج',
+    billing: 'الفواتير',
 
     // Auth Page
     usernameOrEmail: 'اسم المستخدم أو البريد الإلكتروني',
