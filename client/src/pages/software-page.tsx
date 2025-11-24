@@ -250,7 +250,12 @@ export default function SoftwarePage() {
 
   const handleDownload = (software: SoftwareWithCategory) => {
     if (software.filePath) {
-      window.location.href = `/api/download/${software.filePath}`;
+      const link = document.createElement("a");
+      link.href = `/api/download/${software.filePath}`;
+      link.setAttribute("download", "");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else if (software.downloadUrl) {
       window.open(software.downloadUrl, "_blank");
     }
