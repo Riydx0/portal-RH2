@@ -293,8 +293,26 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/software", requireAdmin, async (req, res) => {
     try {
-      const data = insertSoftwareSchema.parse(req.body);
-      const sw = await storage.createSoftware(data);
+      const { isShared, ...data } = req.body;
+      const parsed = insertSoftwareSchema.parse(data);
+      const sw = await storage.createSoftware(parsed);
+      
+      if (isShared && sw.filePath) {
+        const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        await db.update(software)
+          .set({ isShared: true, shareCode: secretCode })
+          .where(eq(software.id, sw.id));
+        
+        await db.insert(shareLinks).values({
+          softwareId: sw.id,
+          secretCode,
+          createdBy: req.user!.id,
+          permissions: "download",
+        });
+        
+        return res.status(201).json({ ...sw, isShared: true, shareCode: secretCode });
+      }
+      
       res.status(201).json(sw);
     } catch (error: any) {
       res.status(400).send(error.message);
@@ -303,7 +321,36 @@ export function registerRoutes(app: Express): Server {
 
   app.patch("/api/software/:id", requireAdmin, async (req, res) => {
     try {
-      const sw = await storage.updateSoftware(parseInt(req.params.id), req.body);
+      const { isShared, ...data } = req.body;
+      const id = parseInt(req.params.id);
+      const sw = await storage.updateSoftware(id, data);
+      
+      if (isShared !== undefined) {
+        const updateData: any = { isShared };
+        
+        if (isShared && sw.filePath && !sw.shareCode) {
+          const secretCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+          updateData.shareCode = secretCode;
+          
+          await db.insert(shareLinks).values({
+            softwareId: id,
+            secretCode,
+            createdBy: req.user!.id,
+            permissions: "download",
+          });
+        } else if (!isShared && sw.shareCode) {
+          updateData.shareCode = null;
+          await db.delete(shareLinks).where(eq(shareLinks.secretCode, sw.shareCode));
+        }
+        
+        const updated = await db.update(software)
+          .set(updateData)
+          .where(eq(software.id, id))
+          .returning();
+        
+        return res.json(updated[0]);
+      }
+      
       res.json(sw);
     } catch (error: any) {
       res.status(500).send(error.message);

@@ -71,7 +71,7 @@ export default function SoftwarePage() {
     withPassword: false,
     withExpiration: false,
   });
-  const [formData, setFormData] = useState<InsertSoftware & { filePath?: string; fileSize?: number }>({
+  const [formData, setFormData] = useState<InsertSoftware & { filePath?: string; fileSize?: number; isShared?: boolean }>({
     name: "",
     categoryId: 0,
     description: "",
@@ -79,6 +79,7 @@ export default function SoftwarePage() {
     version: "",
     platform: "Both",
     isActive: true,
+    isShared: false,
   });
 
   const { data: software, isLoading } = useQuery<SoftwareWithCategory[]>({
@@ -296,6 +297,7 @@ export default function SoftwarePage() {
       version: "",
       platform: "Both",
       isActive: true,
+      isShared: false,
     });
     setSelectedFile(null);
   };
@@ -440,15 +442,31 @@ export default function SoftwarePage() {
                             </Button>
                           )}
                           {sw.filePath && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleShare(sw)}
-                              data-testid={`button-share-${sw.id}`}
-                              title="Create a shareable link with secret code"
-                            >
-                              <Share2 className="h-4 w-4" />
-                            </Button>
+                            sw.isShared && sw.shareCode ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const link = `${window.location.origin}/download/${sw.shareCode}`;
+                                  navigator.clipboard.writeText(link);
+                                  toast({ title: "Share link copied!" });
+                                }}
+                                data-testid={`button-quick-share-${sw.id}`}
+                                title="Copy share link"
+                              >
+                                <Share2 className="h-4 w-4 text-blue-600" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleShare(sw)}
+                                data-testid={`button-share-${sw.id}`}
+                                title="Create a shareable link with secret code"
+                              >
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                            )
                           )}
                           <Button
                             variant="outline"
@@ -767,6 +785,15 @@ export default function SoftwarePage() {
               />
               <Label htmlFor="create-active">Active</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="create-shared"
+                checked={formData.isShared || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, isShared: checked })}
+                data-testid="switch-software-shared"
+              />
+              <Label htmlFor="create-shared">Enable Public Sharing</Label>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -910,6 +937,15 @@ export default function SoftwarePage() {
                 data-testid="switch-edit-active"
               />
               <Label htmlFor="edit-active">Active</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="edit-shared"
+                checked={formData.isShared || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, isShared: checked })}
+                data-testid="switch-edit-shared"
+              />
+              <Label htmlFor="edit-shared">Enable Public Sharing</Label>
             </div>
           </div>
           <DialogFooter>

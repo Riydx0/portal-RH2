@@ -85,6 +85,8 @@ export const software = pgTable("software", {
   version: text("version"),
   platform: platformEnum("platform").notNull().default("Both"),
   isActive: boolean("is_active").notNull().default(true),
+  isShared: boolean("is_shared").notNull().default(false),
+  shareCode: text("share_code"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
