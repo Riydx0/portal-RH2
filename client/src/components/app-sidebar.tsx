@@ -170,9 +170,10 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{t('mainMenu', lang)}</SidebarGroupLabel>
+      <SidebarContent className="space-y-0">
+        {/* Main Menu Section */}
+        <SidebarGroup className="pb-3">
+          <SidebarGroupLabel className="text-xs uppercase tracking-widest font-semibold">{t('mainMenu', lang)}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) =>
@@ -191,17 +192,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <Separator className="my-2" />
+
+        {/* Administration Section */}
         {isAdmin && adminItems.length > 0 && (
-          <SidebarGroup>
+          <SidebarGroup className="py-3">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     onClick={() => setAdminOpen(!adminOpen)}
                     data-testid="button-administration"
+                    className="font-semibold text-sm"
                   >
-                    <span className="font-semibold">{t('administration', lang)}</span>
-                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${adminOpen ? 'rotate-90' : ''}`} />
+                    <span>{t('administration', lang)}</span>
+                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform duration-200 ${adminOpen ? 'rotate-90' : ''}`} />
                   </SidebarMenuButton>
                   {adminOpen && (
                     <SidebarMenuSub>
@@ -225,8 +230,11 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>{t('account', lang)}</SidebarGroupLabel>
+        <Separator className="my-2" />
+
+        {/* Account Section */}
+        <SidebarGroup className="pt-3">
+          <SidebarGroupLabel className="text-xs uppercase tracking-widest font-semibold">{t('account', lang)}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -238,7 +246,7 @@ export function AppSidebar() {
                   <Settings className="h-4 w-4" />
                   <span>{t('settings', lang)}</span>
                   {(settingsItems.length > 0 || adminSettingsItems.length > 0) && (
-                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform duration-200 ${settingsOpen ? 'rotate-90' : ''}`} />
                   )}
                 </SidebarMenuButton>
                 {settingsOpen && (settingsItems.length > 0 || adminSettingsItems.length > 0) && (
