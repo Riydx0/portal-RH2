@@ -471,7 +471,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/settings", requireAdmin, async (req, res) => {
+  app.get("/api/settings", async (req, res) => {
     try {
       const result = await db.select().from(settings);
       const settingsMap: Record<string, string> = {};
