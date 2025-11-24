@@ -41,6 +41,7 @@ import SoftwarePricingPage from "@/pages/software-pricing-page";
 import SoftwarePricingAdminPage from "@/pages/software-pricing-admin-page";
 import SubscriptionPlansPage from "@/pages/subscription-plans-page";
 import PricingPage from "@/pages/pricing-page";
+import EmailSettingsPage from "@/pages/email-settings-page";
 
 function Router() {
   return (
@@ -74,6 +75,7 @@ function Router() {
       <ProtectedRoute path="/software-pricing" component={SoftwarePricingPage} />
       <ProtectedRoute path="/pricing-admin" component={SubscriptionPlansPage} />
       <ProtectedRoute path="/software-pricing-admin" component={SoftwarePricingAdminPage} />
+      <ProtectedRoute path="/email-settings" component={EmailSettingsPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

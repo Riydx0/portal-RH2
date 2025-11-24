@@ -1190,6 +1190,21 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Email test endpoint
+  app.post("/api/settings/test-email", requireAdmin, async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      const { sendWelcomeEmail } = await import("./email.js");
+      await sendWelcomeEmail(testEmail, "Test User");
+      res.json({ success: true, message: "Test email sent successfully" });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || "Failed to send test email",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

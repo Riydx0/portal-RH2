@@ -39,6 +39,7 @@ import {
   FileText,
   Globe,
   DollarSign,
+  Mail,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -190,6 +191,12 @@ export function AppSidebar() {
       title: t('sso', lang),
       url: "/settings/sso",
       icon: LogIn,
+      show: isAdmin,
+    },
+    {
+      title: "Email Settings",
+      url: "/email-settings",
+      icon: Mail,
       show: isAdmin,
     },
     {
