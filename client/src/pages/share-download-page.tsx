@@ -150,8 +150,7 @@ export default function ShareDownloadPage() {
                   disabled={isLoading || !secretCode.trim()}
                   data-testid="button-download-submit"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  {isLoading ? (isAutoSubmitting ? "Verifying..." : "Verify & Download") : "Continue"}
+                  {isLoading ? (isAutoSubmitting ? "Verifying..." : "Verifying") : "Continue"}
                 </Button>
               </>
             ) : (
