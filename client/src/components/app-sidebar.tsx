@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage, t } from "@/lib/i18n";
 import {
   Sidebar,
   SidebarContent,
@@ -37,25 +38,26 @@ import { Separator } from "@/components/ui/separator";
 
 export function AppSidebar() {
   const { user, logoutMutation } = useAuth();
+  const { lang } = useLanguage();
   const [location] = useLocation();
 
   const isAdmin = user?.role === "admin";
 
   const menuItems = [
     {
-      title: "Dashboard",
+      title: t('dashboard', lang),
       url: "/",
       icon: LayoutDashboard,
       show: true,
     },
     {
-      title: "Downloads",
+      title: t('downloads', lang),
       url: "/downloads",
       icon: Download,
       show: true,
     },
     {
-      title: "Tickets",
+      title: t('tickets', lang),
       url: "/tickets",
       icon: Ticket,
       show: true,
@@ -64,31 +66,31 @@ export function AppSidebar() {
 
   const adminItems = [
     {
-      title: "Users",
+      title: t('users', lang),
       url: "/users",
       icon: Users,
       show: isAdmin,
     },
     {
-      title: "Groups",
+      title: t('groups', lang),
       url: "/groups",
       icon: Shield,
       show: isAdmin,
     },
     {
-      title: "Categories",
+      title: t('categories', lang),
       url: "/categories",
       icon: FolderTree,
       show: isAdmin,
     },
     {
-      title: "Software",
+      title: t('software', lang),
       url: "/software",
       icon: HardDrive,
       show: isAdmin,
     },
     {
-      title: "Licenses",
+      title: t('licenses', lang),
       url: "/licenses",
       icon: Key,
       show: isAdmin,
@@ -97,32 +99,32 @@ export function AppSidebar() {
 
   const settingsItems = [
     {
-      title: "Appearance",
+      title: t('appearance', lang),
       url: "/settings/appearance",
       show: isAdmin,
     },
     {
-      title: "Branding",
+      title: t('branding', lang),
       url: "/settings/branding",
       show: isAdmin,
     },
     {
-      title: "SSO Settings",
+      title: t('sso', lang),
       url: "/settings/sso",
       show: isAdmin,
     },
     {
-      title: "Activity Logs",
+      title: t('activityLogs', lang),
       url: "/settings/logs",
       show: isAdmin,
     },
     {
-      title: "Language",
+      title: t('language', lang),
       url: "/settings/language",
       show: true,
     },
     {
-      title: "Change Password",
+      title: t('changePassword', lang),
       url: "/settings/change-password",
       show: true,
     },
@@ -162,7 +164,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('mainMenu', lang)}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) =>
@@ -183,7 +185,7 @@ export function AppSidebar() {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('administration', lang)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map((item) =>
@@ -204,14 +206,14 @@ export function AppSidebar() {
         )}
 
         <SidebarGroup>
-          <SidebarGroupLabel>الحساب / Account</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('account', lang)}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/settings" || location.startsWith("/settings/")}>
                   <Link href="/settings" data-testid="link-settings">
                     <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t('settings', lang)}</span>
                     <ChevronRight className="h-4 w-4 ml-auto" />
                   </Link>
                 </SidebarMenuButton>
@@ -263,7 +265,7 @@ export function AppSidebar() {
             data-testid="button-logout"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Logout
+            {t('logout', lang)}
           </Button>
         </div>
       </SidebarFooter>

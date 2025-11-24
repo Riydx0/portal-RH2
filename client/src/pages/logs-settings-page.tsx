@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { useLanguage, t } from "@/lib/i18n";
 
 interface ActivityLog {
   id: number;
@@ -94,6 +95,7 @@ const mockLogs: ActivityLog[] = [
 ];
 
 export default function LogsSettingsPage() {
+  const { lang } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
 
@@ -158,9 +160,9 @@ export default function LogsSettingsPage() {
     <div className="flex-1 space-y-6 p-6 lg:p-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-semibold mb-2">Activity Logs</h1>
+          <h1 className="text-3xl font-semibold mb-2">{t('activityLogsTitle', lang)}</h1>
           <p className="text-muted-foreground">
-            View all system activities and user actions
+            {t('viewAllSystemActivities', lang)}
           </p>
         </div>
         <Button
@@ -169,67 +171,67 @@ export default function LogsSettingsPage() {
           data-testid="button-export-logs"
         >
           <Download className="h-4 w-4 mr-2" />
-          Export CSV
+          {t('exportCSV', lang)}
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalActivities', lang)}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mockLogs.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Last 24 hours</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('last24Hours', lang)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Login Events</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('loginEvents', lang)}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {mockLogs.filter(l => l.action === 'LOGIN').length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Successful logins</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('successfulLogins', lang)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Failed Attempts</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('failedAttempts', lang)}</CardTitle>
             <AlertCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {mockLogs.filter(l => l.type === 'error').length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Failed actions</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('failedActions', lang)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">Warnings</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('warnings', lang)}</CardTitle>
             <AlertCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {mockLogs.filter(l => l.type === 'warning').length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Suspicious activities</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('suspiciousActivities', lang)}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Activity Log</CardTitle>
+          <CardTitle>{t('activityLog', lang)}</CardTitle>
           <CardDescription>
-            {filteredLogs.length} of {mockLogs.length} entries
+            {filteredLogs.length} {t('of', lang).toLowerCase()} {mockLogs.length} {t('entries', lang)}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -237,7 +239,7 @@ export default function LogsSettingsPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by user, action, or description..."
+                placeholder={t('searchByUserActionDescription', lang)}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -250,11 +252,11 @@ export default function LogsSettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="all">{t('allTypes', lang)}</SelectItem>
+                <SelectItem value="success">{t('successType', lang)}</SelectItem>
+                <SelectItem value="error">{t('errorType', lang)}</SelectItem>
+                <SelectItem value="warning">{t('warningType', lang)}</SelectItem>
+                <SelectItem value="info">{t('infoType', lang)}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -264,12 +266,12 @@ export default function LogsSettingsPage() {
               <Table data-testid="table-activity-logs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>IP Address</TableHead>
-                    <TableHead>Timestamp</TableHead>
+                    <TableHead>{t('type', lang)}</TableHead>
+                    <TableHead>{t('action', lang)}</TableHead>
+                    <TableHead>{t('user', lang)}</TableHead>
+                    <TableHead>{t('description', lang)}</TableHead>
+                    <TableHead>{t('ipAddress', lang)}</TableHead>
+                    <TableHead>{t('timestamp', lang)}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -307,7 +309,7 @@ export default function LogsSettingsPage() {
           ) : (
             <div className="text-center py-8">
               <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-              <p className="text-muted-foreground">No logs match your filters</p>
+              <p className="text-muted-foreground">{t('noLogsMatch', lang)}</p>
             </div>
           )}
         </CardContent>

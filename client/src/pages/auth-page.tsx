@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect } from "wouter";
@@ -7,14 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Server, Loader2 } from "lucide-react";
+import { useLanguage, t } from "@/lib/i18n";
 
 type SettingsData = Record<string, string>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
+  const { lang } = useLanguage();
   const [isRegister, setIsRegister] = useState(false);
   const [loginData, setLoginData] = useState({ username: "", password: "" });
   const [registerData, setRegisterData] = useState({ name: "", email: "", username: "", password: "" });
+
+  useEffect(() => {
+    if (lang === 'ar') {
+      document.documentElement.dir = 'rtl';
+    } else {
+      document.documentElement.dir = 'ltr';
+    }
+  }, [lang]);
   
   const { data: settings } = useQuery<SettingsData>({
     queryKey: ["/api/settings"],
@@ -64,11 +74,11 @@ export default function AuthPage() {
           {!isRegister ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-username">Username or Email</Label>
+                <Label htmlFor="login-username">{t('usernameOrEmail', lang)}</Label>
                 <Input
                   id="login-username"
                   type="text"
-                  placeholder="admin or admin@example.com"
+                  placeholder={lang === 'ar' ? 'admin أو admin@example.com' : 'admin or admin@example.com'}
                   value={loginData.username}
                   onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                   required
@@ -76,7 +86,7 @@ export default function AuthPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <Label htmlFor="login-password">{t('password', lang)}</Label>
                 <Input
                   id="login-password"
                   type="password"
@@ -96,10 +106,10 @@ export default function AuthPage() {
                 {loginMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t('signingIn', lang)}
                   </>
                 ) : (
-                  "Sign in"
+                  t('signIn', lang)
                 )}
               </Button>
               <div className="text-center">
@@ -108,7 +118,7 @@ export default function AuthPage() {
                   className="text-sm text-primary hover:underline"
                   data-testid="link-forgot-password"
                 >
-                  Forgot password?
+                  {t('forgotPassword', lang)}
                 </a>
               </div>
               {import.meta.env.VITE_OPENID_ISSUER_URL && (
@@ -118,7 +128,7 @@ export default function AuthPage() {
                       <span className="w-full border-t" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or</span>
+                      <span className="bg-card px-2 text-muted-foreground">{t('or', lang)}</span>
                     </div>
                   </div>
                   <Button
@@ -128,20 +138,20 @@ export default function AuthPage() {
                     onClick={() => (window.location.href = "/api/auth/openid")}
                     data-testid="button-login-openid"
                   >
-                    Sign in with OpenID
+                    {t('signInWithSSO', lang)}
                   </Button>
                 </>
               )}
               {enableRegistration && (
                 <p className="text-center text-sm text-muted-foreground">
-                  Don't have an account?{" "}
+                  {t('dontHaveAccount', lang)}{" "}
                   <button
                     type="button"
                     onClick={() => setIsRegister(true)}
                     className="text-primary hover:underline font-medium"
                     data-testid="button-switch-register"
                   >
-                    Sign up
+                    {t('registerHere', lang)}
                   </button>
                 </p>
               )}
@@ -149,11 +159,11 @@ export default function AuthPage() {
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="register-name">Full Name</Label>
+                <Label htmlFor="register-name">{t('fullName', lang)}</Label>
                 <Input
                   id="register-name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={lang === 'ar' ? 'أحمد محمد' : 'John Doe'}
                   value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                   required
@@ -161,7 +171,7 @@ export default function AuthPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-email">Email</Label>
+                <Label htmlFor="register-email">{t('email', lang)}</Label>
                 <Input
                   id="register-email"
                   type="email"
@@ -185,7 +195,7 @@ export default function AuthPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Password</Label>
+                <Label htmlFor="register-password">{t('password', lang)}</Label>
                 <Input
                   id="register-password"
                   type="password"
@@ -205,21 +215,21 @@ export default function AuthPage() {
                 {registerMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {t('registering', lang)}
                   </>
                 ) : (
-                  "Create account"
+                  t('register', lang)
                 )}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
+                {t('alreadyHaveAccount', lang)}{" "}
                 <button
                   type="button"
                   onClick={() => setIsRegister(false)}
                   className="text-primary hover:underline font-medium"
                   data-testid="button-switch-login"
                 >
-                  Sign in
+                  {t('loginHere', lang)}
                 </button>
               </p>
             </form>
