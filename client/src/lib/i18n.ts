@@ -27,6 +27,9 @@ const translations = {
     of: 'of',
     externalLinks: 'External Links',
     dashboardSettings: 'Dashboard Settings',
+    networks: 'Networks',
+    vpn: 'VPN Settings',
+    firewall: 'Firewall Rules',
 
     // Auth Page
     usernameOrEmail: 'Username or Email',
@@ -162,6 +165,9 @@ const translations = {
     of: 'من',
     externalLinks: 'الروابط الخارجية',
     dashboardSettings: 'إعدادات لوحة التحكم',
+    networks: 'الشبكات',
+    vpn: 'إعدادات VPN',
+    firewall: 'قواعد جدار الحماية',
 
     // Auth Page
     usernameOrEmail: 'اسم المستخدم أو البريد الإلكتروني',

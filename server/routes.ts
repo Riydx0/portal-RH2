@@ -20,9 +20,15 @@ import {
   notifications,
   shareLinks,
   groups,
+  networks,
+  vpnConfigs,
+  firewallRules,
   insertExternalLinkSchema,
   insertShareLinkSchema,
   insertGroupSchema,
+  insertNetworkSchema,
+  insertVpnConfigSchema,
+  insertFirewallRuleSchema,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -852,6 +858,106 @@ export function registerRoutes(app: Express): Server {
       resetCodes.delete(email);
 
       res.json({ success: true, message: "Password reset successfully" });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Networks endpoints
+  app.get("/api/networks", requireAdmin, async (req, res) => {
+    try {
+      const allNetworks = await db.select().from(networks);
+      res.json(allNetworks);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/networks", requireAdmin, async (req, res) => {
+    try {
+      const data = insertNetworkSchema.parse(req.body);
+      const created = await db.insert(networks).values(data).returning();
+      res.json(created[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/networks/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(networks).where(eq(networks.id, parseInt(req.params.id)));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // VPN endpoints
+  app.get("/api/vpn", requireAdmin, async (req, res) => {
+    try {
+      const allVpn = await db.select().from(vpnConfigs);
+      res.json(allVpn);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/vpn", requireAdmin, async (req, res) => {
+    try {
+      const data = insertVpnConfigSchema.parse(req.body);
+      const created = await db.insert(vpnConfigs).values(data).returning();
+      res.json(created[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/vpn/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(vpnConfigs).where(eq(vpnConfigs.id, parseInt(req.params.id)));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Firewall endpoints
+  app.get("/api/firewall", requireAdmin, async (req, res) => {
+    try {
+      const allRules = await db.select().from(firewallRules);
+      res.json(allRules);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/firewall", requireAdmin, async (req, res) => {
+    try {
+      const data = insertFirewallRuleSchema.parse(req.body);
+      const created = await db.insert(firewallRules).values(data).returning();
+      res.json(created[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/firewall/:id", requireAdmin, async (req, res) => {
+    try {
+      const updated = await db
+        .update(firewallRules)
+        .set(req.body)
+        .where(eq(firewallRules.id, parseInt(req.params.id)))
+        .returning();
+      res.json(updated[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/firewall/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(firewallRules).where(eq(firewallRules.id, parseInt(req.params.id)));
+      res.json({ success: true });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

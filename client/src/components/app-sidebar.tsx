@@ -100,6 +100,24 @@ export function AppSidebar() {
       icon: Key,
       show: isAdmin,
     },
+    {
+      title: t('networks', lang),
+      url: "/networks",
+      icon: ExternalLink,
+      show: isAdmin,
+    },
+    {
+      title: t('vpn', lang),
+      url: "/vpn",
+      icon: LayoutGrid,
+      show: isAdmin,
+    },
+    {
+      title: t('firewall', lang),
+      url: "/firewall",
+      icon: Shield,
+      show: isAdmin,
+    },
   ];
 
   const settingsItems = [

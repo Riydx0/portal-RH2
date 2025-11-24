@@ -8,6 +8,8 @@ export const ticketStatusEnum = pgEnum("ticket_status", ["open", "in-progress", 
 export const ticketPriorityEnum = pgEnum("ticket_priority", ["low", "normal", "high"]);
 export const licenseStatusEnum = pgEnum("license_status", ["available", "in-use", "expired"]);
 export const platformEnum = pgEnum("platform", ["Windows", "Mac", "Both"]);
+export const networkStatusEnum = pgEnum("network_status", ["active", "inactive", "maintenance", "error"]);
+export const firewallStatusEnum = pgEnum("firewall_status", ["enabled", "disabled", "monitoring"]);
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -116,10 +118,10 @@ export const externalLinks = pgTable("external_links", {
 export const notifications = pgTable("notifications", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(), // 'license_expiring', 'ticket_assigned', 'info'
+  type: text("type").notNull(),
   title: text("title").notNull(),
   message: text("message").notNull(),
-  relatedId: integer("related_id"), // ticket id, license id, etc
+  relatedId: integer("related_id"),
   read: boolean("read").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -147,6 +149,67 @@ export const userGroups = pgTable("user_groups", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const networks = pgTable("networks", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  ipRange: text("ip_range").notNull(),
+  gateway: text("gateway"),
+  dns: text("dns"),
+  status: networkStatusEnum("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const vpnConfigs = pgTable("vpn_configs", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  protocol: text("protocol").notNull(), // OpenVPN, WireGuard, IPSec, etc
+  serverAddress: text("server_address").notNull(),
+  port: integer("port").notNull(),
+  username: text("username"),
+  password: text("password"),
+  certificate: text("certificate"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const firewallRules = pgTable("firewall_rules", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  description: text("description"),
+  action: text("action").notNull(), // allow, deny, log
+  sourceIp: text("source_ip"),
+  destinationIp: text("destination_ip"),
+  port: text("port"),
+  protocol: text("protocol"), // TCP, UDP, ICMP, etc
+  priority: integer("priority").notNull().default(100),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Schemas & Types
+export const insertNetworkSchema = createInsertSchema(networks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVpnConfigSchema = createInsertSchema(vpnConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFirewallRuleSchema = createInsertSchema(firewallRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),
   assignedTickets: many(tickets, { relationName: "assignedTo" }),
@@ -165,7 +228,7 @@ export const softwareRelations = relations(software, ({ one, many }) => ({
   licenses: many(licenses),
 }));
 
-export const licenseRelations = relations(licenses, ({ one }) => ({
+export const licensesRelations = relations(licenses, ({ one }) => ({
   software: one(software, {
     fields: [licenses.softwareId],
     references: [software.id],
@@ -197,136 +260,116 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
   }),
 }));
 
-export const clientsRelations = relations(clients, ({ one, many }) => ({
-  user: one(users, {
-    fields: [clients.userId],
-    references: [users.id],
-  }),
-  devices: many(devices),
-}));
+// Types
+export type Network = typeof networks.$inferSelect;
+export type InsertNetwork = z.infer<typeof insertNetworkSchema>;
 
-export const devicesRelations = relations(devices, ({ one }) => ({
-  client: one(clients, {
-    fields: [devices.clientId],
-    references: [clients.id],
-  }),
-}));
+export type VpnConfig = typeof vpnConfigs.$inferSelect;
+export type InsertVpnConfig = z.infer<typeof insertVpnConfigSchema>;
 
+export type FirewallRule = typeof firewallRules.$inferSelect;
+export type InsertFirewallRule = z.infer<typeof insertFirewallRuleSchema>;
+
+export type User = typeof users.$inferSelect;
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
+export type Category = typeof categories.$inferSelect;
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
 });
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
+export type Software = typeof software.$inferSelect;
 export const insertSoftwareSchema = createInsertSchema(software).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertSoftware = z.infer<typeof insertSoftwareSchema>;
 
+export type License = typeof licenses.$inferSelect;
 export const insertLicenseSchema = createInsertSchema(licenses).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertLicense = z.infer<typeof insertLicenseSchema>;
 
+export type Ticket = typeof tickets.$inferSelect;
 export const insertTicketSchema = createInsertSchema(tickets).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertTicket = z.infer<typeof insertTicketSchema>;
 
+export type TicketComment = typeof ticketComments.$inferSelect;
 export const insertTicketCommentSchema = createInsertSchema(ticketComments).omit({
   id: true,
   createdAt: true,
 });
+export type InsertTicketComment = z.infer<typeof insertTicketCommentSchema>;
 
+export type Client = typeof clients.$inferSelect;
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertClient = z.infer<typeof insertClientSchema>;
 
+export type Device = typeof devices.$inferSelect;
 export const insertDeviceSchema = createInsertSchema(devices).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 
+export type Setting = typeof settings.$inferSelect;
 export const insertSettingSchema = createInsertSchema(settings).omit({
   id: true,
-  updatedAt: true,
 });
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
 
+export type ExternalLink = typeof externalLinks.$inferSelect;
 export const insertExternalLinkSchema = createInsertSchema(externalLinks).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+export type InsertExternalLink = z.infer<typeof insertExternalLinkSchema>;
 
+export type Notification = typeof notifications.$inferSelect;
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
 });
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+export type ShareLink = typeof shareLinks.$inferSelect;
 export const insertShareLinkSchema = createInsertSchema(shareLinks).omit({
   id: true,
   createdAt: true,
 });
+export type InsertShareLink = z.infer<typeof insertShareLinkSchema>;
 
+export type Group = typeof groups.$inferSelect;
 export const insertGroupSchema = createInsertSchema(groups).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
-
-export const insertUserGroupSchema = createInsertSchema(userGroups).omit({
-  createdAt: true,
-});
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-
-export type Software = typeof software.$inferSelect;
-export type InsertSoftware = z.infer<typeof insertSoftwareSchema>;
-
-export type License = typeof licenses.$inferSelect;
-export type InsertLicense = z.infer<typeof insertLicenseSchema>;
-
-export type Ticket = typeof tickets.$inferSelect;
-export type InsertTicket = z.infer<typeof insertTicketSchema>;
-
-export type TicketComment = typeof ticketComments.$inferSelect;
-export type InsertTicketComment = z.infer<typeof insertTicketCommentSchema>;
-
-export type Client = typeof clients.$inferSelect;
-export type InsertClient = z.infer<typeof insertClientSchema>;
-
-export type Device = typeof devices.$inferSelect;
-export type InsertDevice = z.infer<typeof insertDeviceSchema>;
-
-export type Setting = typeof settings.$inferSelect;
-export type InsertSetting = z.infer<typeof insertSettingSchema>;
-
-export type ExternalLink = typeof externalLinks.$inferSelect;
-export type InsertExternalLink = z.infer<typeof insertExternalLinkSchema>;
-
-export type Notification = typeof notifications.$inferSelect;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-
-export type ShareLink = typeof shareLinks.$inferSelect;
-export type InsertShareLink = z.infer<typeof insertShareLinkSchema>;
-
-export type Group = typeof groups.$inferSelect;
 export type InsertGroup = z.infer<typeof insertGroupSchema>;
 
 export type UserGroup = typeof userGroups.$inferSelect;
+export const insertUserGroupSchema = createInsertSchema(userGroups).omit({
+  createdAt: true,
+});
 export type InsertUserGroup = z.infer<typeof insertUserGroupSchema>;
