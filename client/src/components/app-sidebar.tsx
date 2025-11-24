@@ -30,6 +30,8 @@ import {
   Users,
   Settings,
   ChevronRight,
+  ExternalLink,
+  LayoutGrid,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -129,6 +131,16 @@ export function AppSidebar() {
     {
       title: t('sso', lang),
       url: "/settings/sso",
+      show: isAdmin,
+    },
+    {
+      title: t('dashboardSettings', lang),
+      url: "/dashboard-settings",
+      show: isAdmin,
+    },
+    {
+      title: t('externalLinks', lang),
+      url: "/external-links",
       show: isAdmin,
     },
     {

@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Key, Ticket, CheckCircle, AlertCircle, FolderTree, Bell, ExternalLink as ExternalLinkIcon } from "lucide-react";
+import { HardDrive, Key, Ticket, CheckCircle, AlertCircle, FolderTree, Bell, ExternalLink as ExternalLinkIcon, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Ticket as TicketType, ExternalLink, Notification } from "@shared/schema";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 type DashboardStats = {
   totalSoftware: number;
@@ -65,11 +67,33 @@ export default function DashboardPage() {
     return variants[priority] || variants.normal;
   };
 
+  const licenseData = stats ? [
+    { name: "Available", value: stats.availableLicenses, fill: "#10b981" },
+    { name: "In Use", value: stats.inUseLicenses, fill: "#3b82f6" },
+    { name: "Expired", value: stats.expiredLicenses, fill: "#ef4444" },
+  ].filter(d => d.value > 0) : [];
+
+  const ticketData = stats ? [
+    { name: "Open", count: stats.openTickets, fill: "#3b82f6" },
+    { name: "In Progress", count: stats.inProgressTickets, fill: "#f59e0b" },
+    { name: "Closed", count: stats.closedTickets, fill: "#10b981" },
+  ] : [];
+
   return (
     <div className="flex-1 space-y-6 p-6 lg:p-8">
-      <div>
-        <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your IT service portal</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your IT service portal</p>
+        </div>
+        {isAdmin && (
+          <Link href="/dashboard-settings">
+            <Button variant="outline" size="sm" data-testid="button-dashboard-settings">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -226,6 +250,70 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {isAdmin && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">License Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <Skeleton className="h-60 w-full" />
+              ) : licenseData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={licenseData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {licenseData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-60 flex items-center justify-center text-muted-foreground">
+                  No license data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Ticket Status Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <Skeleton className="h-60 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={ticketData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#3b82f6">
+                      {ticketData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <div className="grid gap-6">

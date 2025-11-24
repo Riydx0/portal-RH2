@@ -25,6 +25,8 @@ const translations = {
     account: 'Account',
     logout: 'Logout',
     of: 'of',
+    externalLinks: 'External Links',
+    dashboardSettings: 'Dashboard Settings',
 
     // Auth Page
     usernameOrEmail: 'Username or Email',
@@ -158,6 +160,8 @@ const translations = {
     account: 'الحساب',
     logout: 'تسجيل الخروج',
     of: 'من',
+    externalLinks: 'الروابط الخارجية',
+    dashboardSettings: 'إعدادات لوحة التحكم',
 
     // Auth Page
     usernameOrEmail: 'اسم المستخدم أو البريد الإلكتروني',

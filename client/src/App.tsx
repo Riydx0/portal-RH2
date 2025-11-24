@@ -31,6 +31,8 @@ import ForgotPasswordPage from "@/pages/forgot-password-page";
 import GroupsPage from "@/pages/groups-page";
 import LanguageSettingsPage from "@/pages/language-settings-page";
 import LogsSettingsPage from "@/pages/logs-settings-page";
+import ExternalLinksPage from "@/pages/external-links-page";
+import DashboardSettingsPage from "@/pages/dashboard-settings-page";
 
 function Router() {
   return (
@@ -54,6 +56,8 @@ function Router() {
       <ProtectedRoute path="/settings/language" component={LanguageSettingsPage} />
       <ProtectedRoute path="/settings/logs" component={LogsSettingsPage} />
       <ProtectedRoute path="/settings/change-password" component={ChangePasswordPage} />
+      <ProtectedRoute path="/external-links" component={ExternalLinksPage} />
+      <ProtectedRoute path="/dashboard-settings" component={DashboardSettingsPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>
