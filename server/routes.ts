@@ -26,13 +26,40 @@ const multerStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
+    const sanitizedName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, "_");
+    const finalFilename = uniqueSuffix + "-" + sanitizedName;
+    
+    const finalPath = path.join(uploadsDir, finalFilename);
+    const resolvedFinalPath = path.resolve(finalPath);
+    const resolvedUploadsDir = path.resolve(uploadsDir);
+    
+    if (!resolvedFinalPath.startsWith(resolvedUploadsDir + path.sep)) {
+      console.error(`[Security] Upload path traversal blocked: ${file.originalname}`);
+      return cb(new Error("Invalid filename - path traversal detected"));
+    }
+    
+    cb(null, finalFilename);
   },
 });
+
+const allowedExtensions = ['.exe', '.msi', '.zip', '.rar', '.7z', '.iso', '.dmg', '.pkg', '.deb', '.rpm', '.pdf', '.tar', '.gz', '.tar.gz'];
 
 const upload = multer({
   storage: multerStorage,
   limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+  fileFilter: (req, file, cb) => {
+    const originalName = file.originalname.toLowerCase();
+    const ext = path.extname(originalName);
+    
+    const isAllowed = allowedExtensions.some(allowedExt => originalName.endsWith(allowedExt));
+    
+    if (isAllowed) {
+      cb(null, true);
+    } else {
+      console.warn(`[Security] File upload blocked - invalid extension: ${file.originalname}`);
+      cb(new Error(`File type not allowed. Allowed extensions: ${allowedExtensions.join(', ')}`));
+    }
+  },
 });
 
 function requireAuth(req: any, res: any, next: any) {
@@ -71,14 +98,29 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/download/:filename", requireAuth, (req, res) => {
     try {
       const filename = req.params.filename;
-      const filePath = path.join(uploadsDir, filename);
       
-      if (!fs.existsSync(filePath)) {
+      if (!filename || filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        console.warn(`[Security] Path traversal attempt blocked: ${filename}`);
+        return res.status(400).send("Invalid filename");
+      }
+      
+      const resolvedUploadsDir = path.resolve(uploadsDir);
+      const filePath = path.join(resolvedUploadsDir, filename);
+      const resolvedPath = path.resolve(filePath);
+      
+      const relativePath = path.relative(resolvedUploadsDir, resolvedPath);
+      if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+        console.warn(`[Security] Path traversal attempt blocked: ${filename} -> ${relativePath}`);
+        return res.status(400).send("Invalid file path");
+      }
+      
+      if (!fs.existsSync(resolvedPath)) {
         return res.status(404).send("File not found");
       }
       
-      res.download(filePath);
+      res.download(resolvedPath);
     } catch (error: any) {
+      console.error(`[Error] Download failed:`, error);
       res.status(500).send(error.message);
     }
   });

@@ -31,7 +31,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { HardDrive, Plus, Pencil, Trash2, Search, Upload, Download, ExternalLink } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -57,7 +57,9 @@ export default function SoftwarePage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedSoftware, setSelectedSoftware] = useState<SoftwareWithCategory | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [formData, setFormData] = useState<InsertSoftware>({
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(false);
+  const [formData, setFormData] = useState<InsertSoftware & { filePath?: string; fileSize?: number }>({
     name: "",
     categoryId: 0,
     description: "",
@@ -75,9 +77,59 @@ export default function SoftwarePage() {
     queryKey: ["/api/categories"],
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (): Promise<{ filename: string; size: number } | null> => {
+    if (!selectedFile) return null;
+
+    setUploadProgress(true);
+    try {
+      const fileFormData = new FormData();
+      fileFormData.append("file", selectedFile);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: fileFormData,
+      });
+
+      if (!response.ok) {
+        throw new Error("File upload failed");
+      }
+
+      const data = await response.json();
+      setUploadProgress(false);
+      return { filename: data.filename, size: data.size };
+    } catch (error: any) {
+      setUploadProgress(false);
+      toast({
+        title: "Upload Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const createMutation = useMutation({
-    mutationFn: async (data: InsertSoftware) => {
-      const res = await apiRequest("POST", "/api/software", data);
+    mutationFn: async (data: InsertSoftware & { filePath?: string; fileSize?: number }) => {
+      let uploadData = data;
+
+      if (selectedFile) {
+        const uploadResult = await uploadFile();
+        if (uploadResult) {
+          uploadData = {
+            ...data,
+            filePath: uploadResult.filename,
+            fileSize: uploadResult.size,
+          };
+        }
+      }
+
+      const res = await apiRequest("POST", "/api/software", uploadData);
       return await res.json();
     },
     onSuccess: () => {
@@ -99,8 +151,21 @@ export default function SoftwarePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertSoftware> }) => {
-      const res = await apiRequest("PATCH", `/api/software/${id}`, data);
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertSoftware> & { filePath?: string; fileSize?: number } }) => {
+      let uploadData = data;
+
+      if (selectedFile) {
+        const uploadResult = await uploadFile();
+        if (uploadResult) {
+          uploadData = {
+            ...data,
+            filePath: uploadResult.filename,
+            fileSize: uploadResult.size,
+          };
+        }
+      }
+
+      const res = await apiRequest("PATCH", `/api/software/${id}`, uploadData);
       return await res.json();
     },
     onSuccess: () => {
@@ -154,6 +219,7 @@ export default function SoftwarePage() {
       platform: "Both",
       isActive: true,
     });
+    setSelectedFile(null);
   };
 
   const handleCreate = () => {
@@ -168,6 +234,8 @@ export default function SoftwarePage() {
       categoryId: sw.categoryId,
       description: sw.description || "",
       downloadUrl: sw.downloadUrl || "",
+      filePath: sw.filePath || "",
+      fileSize: sw.fileSize || 0,
       version: sw.version || "",
       platform: sw.platform,
       isActive: sw.isActive,
@@ -178,6 +246,20 @@ export default function SoftwarePage() {
   const handleDelete = (sw: SoftwareWithCategory) => {
     setSelectedSoftware(sw);
     setIsDeleteOpen(true);
+  };
+
+  const handleDownload = (software: SoftwareWithCategory) => {
+    if (software.filePath) {
+      window.location.href = `/api/download/${software.filePath}`;
+    } else if (software.downloadUrl) {
+      window.open(software.downloadUrl, "_blank");
+    }
+  };
+
+  const formatFileSize = (bytes: number | null | undefined) => {
+    if (!bytes) return "—";
+    const mb = bytes / (1024 * 1024);
+    return mb.toFixed(2) + " MB";
   };
 
   const filteredSoftware = software?.filter((sw) =>
@@ -234,6 +316,7 @@ export default function SoftwarePage() {
                     <TableHead>Category</TableHead>
                     <TableHead>Version</TableHead>
                     <TableHead>Platform</TableHead>
+                    <TableHead>Size</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -251,6 +334,9 @@ export default function SoftwarePage() {
                       <TableCell>
                         <Badge variant="secondary">{sw.platform}</Badge>
                       </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {formatFileSize(sw.fileSize)}
+                      </TableCell>
                       <TableCell>
                         {sw.isActive ? (
                           <Badge className="bg-green-500 hover:bg-green-600">Active</Badge>
@@ -260,6 +346,16 @@ export default function SoftwarePage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {(sw.filePath || sw.downloadUrl) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(sw)}
+                              data-testid={`button-download-${sw.id}`}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -296,7 +392,7 @@ export default function SoftwarePage() {
       </Card>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Software</DialogTitle>
             <DialogDescription>Create a new software item</DialogDescription>
@@ -362,8 +458,30 @@ export default function SoftwarePage() {
                 </Select>
               </div>
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="create-url">Download URL</Label>
+              <Label htmlFor="create-file" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload File
+              </Label>
+              <Input
+                id="create-file"
+                type="file"
+                onChange={handleFileChange}
+                data-testid="input-software-file"
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-url" className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                External Download URL (optional)
+              </Label>
               <Input
                 id="create-url"
                 value={formData.downloadUrl || ""}
@@ -371,7 +489,11 @@ export default function SoftwarePage() {
                 placeholder="https://..."
                 data-testid="input-software-url"
               />
+              <p className="text-xs text-muted-foreground">
+                Use this if you want to link to an external download location instead of uploading a file
+              </p>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="create-description">Description</Label>
               <Textarea
@@ -402,17 +524,17 @@ export default function SoftwarePage() {
             </Button>
             <Button
               onClick={() => createMutation.mutate(formData)}
-              disabled={!formData.name || !formData.categoryId || createMutation.isPending}
+              disabled={!formData.name || !formData.categoryId || createMutation.isPending || uploadProgress}
               data-testid="button-submit-create"
             >
-              Create
+              {uploadProgress ? "Uploading..." : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Software</DialogTitle>
             <DialogDescription>Update software details</DialogDescription>
@@ -476,8 +598,39 @@ export default function SoftwarePage() {
                 </Select>
               </div>
             </div>
+
+            {formData.filePath && (
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm font-medium">Current File</p>
+                <p className="text-sm text-muted-foreground">
+                  {formData.filePath} ({formatFileSize(formData.fileSize)})
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="edit-url">Download URL</Label>
+              <Label htmlFor="edit-file" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload New File (optional)
+              </Label>
+              <Input
+                id="edit-file"
+                type="file"
+                onChange={handleFileChange}
+                data-testid="input-edit-file"
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  New file: {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-url" className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                External Download URL (optional)
+              </Label>
               <Input
                 id="edit-url"
                 value={formData.downloadUrl || ""}
@@ -485,6 +638,7 @@ export default function SoftwarePage() {
                 data-testid="input-edit-url"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
@@ -517,10 +671,10 @@ export default function SoftwarePage() {
                 selectedSoftware &&
                 updateMutation.mutate({ id: selectedSoftware.id, data: formData })
               }
-              disabled={!formData.name || !formData.categoryId || updateMutation.isPending}
+              disabled={!formData.name || !formData.categoryId || updateMutation.isPending || uploadProgress}
               data-testid="button-submit-edit"
             >
-              Update
+              {uploadProgress ? "Uploading..." : "Update"}
             </Button>
           </DialogFooter>
         </DialogContent>
