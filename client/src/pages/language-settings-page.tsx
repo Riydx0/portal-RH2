@@ -52,26 +52,26 @@ export default function LanguageSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {languages.map((lang) => (
+            {languages.map((langItem) => (
               <button
-                key={lang.code}
-                onClick={() => handleLanguageChange(lang.code)}
+                key={langItem.code}
+                onClick={() => handleLanguageChange(langItem.code)}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
-                  currentLanguage === lang.code
+                  currentLanguage === langItem.code
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
                 }`}
-                data-testid={`button-lang-${lang.code}`}
+                data-testid={`button-lang-${langItem.code}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{lang.flag}</span>
+                    <span className="text-3xl">{langItem.flag}</span>
                     <div>
-                      <p className="font-semibold">{lang.name}</p>
-                      <p className="text-sm text-muted-foreground">{lang.nativeName}</p>
+                      <p className="font-semibold">{langItem.name}</p>
+                      <p className="text-sm text-muted-foreground">{langItem.nativeName}</p>
                     </div>
                   </div>
-                  {currentLanguage === lang.code && (
+                  {currentLanguage === langItem.code && (
                     <Badge variant="default" className="ml-2">
                       <Check className="h-3 w-3 mr-1" />
                       {t('active', lang)}

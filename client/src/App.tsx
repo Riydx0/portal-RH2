@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationsButton } from "@/components/notifications-button";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { useLanguage, initLanguage } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import ShareDownloadPage from "@/pages/share-download-page";
@@ -29,7 +31,6 @@ import ForgotPasswordPage from "@/pages/forgot-password-page";
 import GroupsPage from "@/pages/groups-page";
 import LanguageSettingsPage from "@/pages/language-settings-page";
 import LogsSettingsPage from "@/pages/logs-settings-page";
-import { initLanguage } from "@/lib/i18n";
 
 function Router() {
   return (
@@ -60,7 +61,19 @@ function Router() {
 }
 
 function AppContent() {
+  const { lang } = useLanguage();
   const [location] = useLocation();
+
+  useEffect(() => {
+    if (lang === 'ar') {
+      document.documentElement.dir = 'rtl';
+      document.documentElement.lang = 'ar';
+    } else {
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'en';
+    }
+  }, [lang]);
+
   const isAuthPage = location === "/auth";
   const isShareDownload = location.startsWith("/download/");
   const isForgotPassword = location === "/forgot-password";
