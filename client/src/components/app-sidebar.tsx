@@ -99,6 +99,21 @@ export function AppSidebar() {
 
   const settingsItems = [
     {
+      title: t('language', lang),
+      url: "/settings/language",
+      show: true,
+      category: 'account',
+    },
+    {
+      title: t('changePassword', lang),
+      url: "/settings/change-password",
+      show: true,
+      category: 'account',
+    },
+  ].filter(item => item.show);
+
+  const adminSettingsItems = [
+    {
       title: t('appearance', lang),
       url: "/settings/appearance",
       show: isAdmin,
@@ -117,16 +132,6 @@ export function AppSidebar() {
       title: t('activityLogs', lang),
       url: "/settings/logs",
       show: isAdmin,
-    },
-    {
-      title: t('language', lang),
-      url: "/settings/language",
-      show: true,
-    },
-    {
-      title: t('changePassword', lang),
-      url: "/settings/change-password",
-      show: true,
     },
   ].filter(item => item.show);
 
@@ -214,20 +219,42 @@ export function AppSidebar() {
                   <Link href="/settings" data-testid="link-settings">
                     <Settings className="h-4 w-4" />
                     <span>{t('settings', lang)}</span>
-                    <ChevronRight className="h-4 w-4 ml-auto" />
+                    {settingsItems.length > 0 || adminSettingsItems.length > 0 ? (
+                      <ChevronRight className="h-4 w-4 ml-auto" />
+                    ) : null}
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuSub>
-                  {settingsItems.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.url}>
-                      <SidebarMenuSubButton asChild isActive={location === subItem.url}>
-                        <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
-                          <span>{subItem.title}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
+                {(settingsItems.length > 0 || adminSettingsItems.length > 0) && (
+                  <SidebarMenuSub>
+                    {settingsItems.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.url}>
+                        <SidebarMenuSubButton asChild isActive={location === subItem.url}>
+                          <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                    {adminSettingsItems.length > 0 && (
+                      <>
+                        <SidebarMenuSubItem>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Admin Settings
+                          </div>
+                        </SidebarMenuSubItem>
+                        {adminSettingsItems.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.url}>
+                            <SidebarMenuSubButton asChild isActive={location === subItem.url}>
+                              <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </>
+                    )}
+                  </SidebarMenuSub>
+                )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
