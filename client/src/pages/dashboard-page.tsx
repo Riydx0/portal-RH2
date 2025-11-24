@@ -75,7 +75,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (
           <>
-            {[...Array(4)].map((_, i) => (
+            {[...Array(isAdmin ? 4 : 2)].map((_, i) => (
               <Card key={i}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
                   <Skeleton className="h-4 w-24" />
@@ -90,43 +90,47 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">Total Software</CardTitle>
-                <HardDrive className="h-8 w-8 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold" data-testid="stat-total-software">
-                  {stats?.totalSoftware || 0}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Across {stats?.totalCategories || 0} categories
-                </p>
-              </CardContent>
-            </Card>
+            {isAdmin && (
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                    <CardTitle className="text-sm font-medium">Total Software</CardTitle>
+                    <HardDrive className="h-8 w-8 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold" data-testid="stat-total-software">
+                      {stats?.totalSoftware || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Across {stats?.totalCategories || 0} categories
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">Licenses</CardTitle>
-                <Key className="h-8 w-8 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold" data-testid="stat-total-licenses">
-                  {stats?.totalLicenses || 0}
-                </div>
-                <div className="flex gap-2 mt-2 text-xs">
-                  <span className="text-green-500">
-                    {stats?.availableLicenses || 0} available
-                  </span>
-                  <span className="text-blue-500">
-                    {stats?.inUseLicenses || 0} in use
-                  </span>
-                  <span className="text-red-500">
-                    {stats?.expiredLicenses || 0} expired
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+                    <CardTitle className="text-sm font-medium">Licenses</CardTitle>
+                    <Key className="h-8 w-8 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold" data-testid="stat-total-licenses">
+                      {stats?.totalLicenses || 0}
+                    </div>
+                    <div className="flex gap-2 mt-2 text-xs">
+                      <span className="text-green-500">
+                        {stats?.availableLicenses || 0} available
+                      </span>
+                      <span className="text-blue-500">
+                        {stats?.inUseLicenses || 0} in use
+                      </span>
+                      <span className="text-red-500">
+                        {stats?.expiredLicenses || 0} expired
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">

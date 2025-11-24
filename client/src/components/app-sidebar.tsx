@@ -97,7 +97,7 @@ export function AppSidebar() {
       title: "Settings",
       url: "/settings",
       icon: Settings,
-      show: isAdmin,
+      show: true,
     },
   ];
 
@@ -122,7 +122,7 @@ export function AppSidebar() {
       url: "/settings/change-password",
       show: true,
     },
-  ];
+  ].filter(item => item.show);
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -185,7 +185,7 @@ export function AppSidebar() {
                 {adminItems.map((item) =>
                   item.show ? (
                     <SidebarMenuItem key={item.title}>
-                      {item.title === "Settings" ? (
+                      {item.title === "Settings" && isAdmin ? (
                         <>
                           <SidebarMenuButton asChild isActive={location === item.url}>
                             <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
