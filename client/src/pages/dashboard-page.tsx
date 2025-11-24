@@ -253,16 +253,16 @@ export default function DashboardPage() {
       )}
 
       {isAdmin && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">License Distribution</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">License Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <Skeleton className="h-60 w-full" />
+                <Skeleton className="h-40 w-full" />
               ) : licenseData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
                     <Pie
                       data={licenseData}
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
+                      outerRadius={60}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -282,26 +282,26 @@ export default function DashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-60 flex items-center justify-center text-muted-foreground">
-                  No license data available
+                <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
+                  No license data
                 </div>
               )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Ticket Status Overview</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Ticket Status</CardTitle>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <Skeleton className="h-60 w-full" />
+                <Skeleton className="h-40 w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={ticketData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar dataKey="count" fill="#3b82f6">
                       {ticketData.map((entry, index) => (
