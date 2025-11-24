@@ -14,6 +14,26 @@ The portal enables organizations to:
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 24, 2025)
+
+### Role System Simplification
+- Simplified from (Admin, Tech, Client) to (Admin, Client)
+- Admin: Full platform control and management
+- Client: Can create and view support tickets only
+
+### OpenID Connect (OIDC) Authentication
+- Added OpenID Connect support for external authentication providers (Cloudron, etc.)
+- Environment variables required:
+  - `OPENID_ISSUER_URL`: OpenID provider issuer URL
+  - `OPENID_CLIENT_ID`: OAuth client ID  
+  - `OPENID_CLIENT_SECRET`: OAuth client secret
+  - `OPENID_CALLBACK_URL`: Optional, defaults to `/api/auth/openid/callback`
+  - `VITE_OPENID_ISSUER_URL`: Frontend env var to show OpenID login button
+- New authentication routes:
+  - `GET /api/auth/openid`: Initiate OpenID Connect flow
+  - `GET /api/auth/openid/callback`: OAuth callback endpoint
+- Users created via OpenID are automatically assigned "client" role
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -60,11 +80,17 @@ Preferred communication style: Simple, everyday language.
 - Settings endpoints (`GET /api/settings`, `GET /api/settings/:key`, `PATCH /api/settings/:key`) - admin-only
 
 **Authentication & Authorization**:
-- Passport.js with Local Strategy for session-based authentication
+- Passport.js with multiple strategies:
+  - Local Strategy for email/password authentication
+  - OpenID Connect Strategy for external OAuth providers
 - Password hashing using Node.js crypto (scrypt with salt)
 - Express sessions with PostgreSQL session store (connect-pg-simple)
-- Role-based access control (RBAC) with three roles: admin, tech, client
+- Role-based access control (RBAC) with two roles: admin, client
 - Middleware guards: `requireAuth` and `requireAdmin`
+- Session configuration:
+  - 7-day expiration
+  - HTTP-only cookies with sameSite: 'lax'
+  - Stored in PostgreSQL
 
 **Development vs Production**:
 - Development: Vite middleware integration for HMR

@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as OpenIDConnectStrategy } from "passport-openidconnect";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -63,6 +64,45 @@ export function setupAuth(app: Express) {
     )
   );
 
+  // OpenID Connect Strategy
+  if (process.env.OPENID_ISSUER_URL && process.env.OPENID_CLIENT_ID && process.env.OPENID_CLIENT_SECRET) {
+    passport.use(
+      "openidconnect",
+      new OpenIDConnectStrategy(
+        {
+          issuer: process.env.OPENID_ISSUER_URL,
+          clientID: process.env.OPENID_CLIENT_ID,
+          clientSecret: process.env.OPENID_CLIENT_SECRET,
+          authorizationURL: `${process.env.OPENID_ISSUER_URL}/oauth2/auth`,
+          tokenURL: `${process.env.OPENID_ISSUER_URL}/oauth2/token`,
+          userInfoURL: `${process.env.OPENID_ISSUER_URL}/oauth2/userinfo`,
+          callbackURL: process.env.OPENID_CALLBACK_URL || "http://localhost:5000/api/auth/openid/callback",
+          passReqToCallback: true,
+        },
+        async (req: any, issuer: string, sub: string, profile: any, done: any) => {
+          try {
+            const email = profile.email || profile.preferred_username || sub;
+            let user = await storage.getUserByEmail(email);
+
+            if (!user) {
+              // Create new user from OpenID profile
+              user = await storage.createUser({
+                name: profile.name || profile.preferred_username || "OpenID User",
+                email: email,
+                password: await hashPassword(randomBytes(32).toString("hex")),
+                role: "client",
+              });
+            }
+
+            return done(null, user);
+          } catch (error) {
+            return done(error);
+          }
+        }
+      )
+    );
+  }
+
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     const user = await storage.getUser(id);
@@ -105,6 +145,22 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+
+  // OpenID Connect Routes
+  if (process.env.OPENID_ISSUER_URL) {
+    app.get(
+      "/api/auth/openid",
+      passport.authenticate("openidconnect", { failureRedirect: "/auth" })
+    );
+
+    app.get(
+      "/api/auth/openid/callback",
+      passport.authenticate("openidconnect", { failureRedirect: "/auth" }),
+      (req, res) => {
+        res.redirect("/");
+      }
+    );
+  }
 }
 
 export { hashPassword };
