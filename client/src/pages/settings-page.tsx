@@ -6,16 +6,24 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Settings as SettingsIcon, Upload, Save, Eye } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage, t } from "@/lib/i18n";
 import { Redirect } from "wouter";
 
 type SettingsData = Record<string, string>;
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const isAdmin = user?.role === "admin";
   const { toast } = useToast();
   const [siteName, setSiteName] = useState("");
@@ -143,280 +151,283 @@ export default function SettingsPage() {
     <div className="flex-1 space-y-6 p-6 lg:p-8">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-semibold mb-2">Settings</h1>
+          <h1 className="text-3xl font-semibold mb-2">{t('settings', lang)}</h1>
           <p className="text-muted-foreground">Manage application settings</p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" />
-              General Settings
-            </CardTitle>
-            <CardDescription>Configure site name and branding</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="site-name">Site Name</Label>
-              <Input
-                id="site-name"
-                value={siteName}
-                onChange={(e) => setSiteName(e.target.value)}
-                placeholder="IT Portal"
-                data-testid="input-site-name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="logo-upload" className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                Logo
-              </Label>
-              <Input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                data-testid="input-logo-upload"
-              />
-              {selectedLogo && (
-                <p className="text-sm text-muted-foreground">
-                  Selected: {selectedLogo.name}
-                </p>
-              )}
-              {logoUrl && !selectedLogo && (
-                <p className="text-sm text-muted-foreground">
-                  Current logo: {logoUrl}
-                </p>
-              )}
-            </div>
-
-            {logoUrl && (
-              <div className="space-y-2">
-                <Label>Current Logo Preview</Label>
-                <div className="p-4 border rounded-md bg-muted/50 flex items-center justify-center">
-                  <img
-                    src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
-                    alt="Logo preview"
-                    className="max-h-32 object-contain"
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuration Options</CardTitle>
+          <CardDescription>Expand each section to configure your settings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="multiple" className="w-full">
+            {/* General Settings */}
+            <AccordionItem value="general">
+              <AccordionTrigger className="text-lg font-semibold">
+                <SettingsIcon className="h-5 w-5 mr-2" />
+                General Settings
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="site-name">Site Name</Label>
+                  <Input
+                    id="site-name"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                    placeholder="IT Portal"
+                    data-testid="input-site-name"
                   />
                 </div>
-              </div>
-            )}
 
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || uploadProgress || isLoading}
-              className="w-full"
-              data-testid="button-save-settings"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {uploadProgress ? "Uploading..." : saveMutation.isPending ? "Saving..." : "Save Settings"}
-            </Button>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="logo-upload" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Logo
+                  </Label>
+                  <Input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    data-testid="input-logo-upload"
+                  />
+                  {selectedLogo && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected: {selectedLogo.name}
+                    </p>
+                  )}
+                  {logoUrl && !selectedLogo && (
+                    <p className="text-sm text-muted-foreground">
+                      Current logo: {logoUrl}
+                    </p>
+                  )}
+                </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Login Page Settings
-            </CardTitle>
-            <CardDescription>Customize the login page appearance</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-title">Login Page Title</Label>
-              <Input
-                id="login-title"
-                value={loginTitle}
-                onChange={(e) => setLoginTitle(e.target.value)}
-                placeholder="IT Portal"
-                data-testid="input-login-title"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="login-description">Login Page Description</Label>
-              <Textarea
-                id="login-description"
-                value={loginDescription}
-                onChange={(e) => setLoginDescription(e.target.value)}
-                placeholder="Manage your IT services, software, licenses, and support tickets"
-                data-testid="input-login-description"
-                className="resize-none"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="login-bg-color">Background Color</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  id="login-bg-color"
-                  type="color"
-                  value={loginBgColor}
-                  onChange={(e) => setLoginBgColor(e.target.value)}
-                  data-testid="input-login-bg-color"
-                  className="h-12 w-20"
-                />
-                <Input
-                  type="text"
-                  value={loginBgColor}
-                  onChange={(e) => setLoginBgColor(e.target.value)}
-                  placeholder="#f5f5f5"
-                  data-testid="input-login-bg-color-text"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
-              <Label htmlFor="enable-registration" className="cursor-pointer">
-                Enable User Registration
-              </Label>
-              <Switch
-                id="enable-registration"
-                checked={enableRegistration}
-                onCheckedChange={setEnableRegistration}
-                data-testid="toggle-enable-registration"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Branding</CardTitle>
-            <CardDescription>Customize your platform branding</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cloudron-name">Organization Name</Label>
-              <Input
-                id="cloudron-name"
-                value={cloudronName}
-                onChange={(e) => setCloudronName(e.target.value)}
-                placeholder="Riyadh Alafraa Systems"
-                data-testid="input-cloudron-name"
-              />
-              <p className="text-xs text-muted-foreground">Your organization name (e.g., company or department)</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="footer-text">Footer Text</Label>
-              <Input
-                id="footer-text"
-                value={footerText}
-                onChange={(e) => setFooterText(e.target.value)}
-                placeholder="Riyadh Alafraa"
-                data-testid="input-footer-text"
-              />
-              <p className="text-xs text-muted-foreground">Text displayed in the footer of every page</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" />
-              SSO Settings
-            </CardTitle>
-            <CardDescription>Configure OpenID Connect Single Sign-On</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="openid-issuer">OpenID Issuer URL</Label>
-              <Input
-                id="openid-issuer"
-                value={openidIssuerUrl}
-                onChange={(e) => setOpenidIssuerUrl(e.target.value)}
-                placeholder="https://my.example.com"
-                data-testid="input-openid-issuer"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="openid-client-id">Client ID</Label>
-              <Input
-                id="openid-client-id"
-                value={openidClientId}
-                onChange={(e) => setOpenidClientId(e.target.value)}
-                placeholder="your-client-id"
-                data-testid="input-openid-client-id"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="openid-client-secret">Client Secret</Label>
-              <Input
-                id="openid-client-secret"
-                type="password"
-                value={openidClientSecret}
-                onChange={(e) => setOpenidClientSecret(e.target.value)}
-                placeholder="your-client-secret"
-                data-testid="input-openid-client-secret"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="openid-callback">Callback URL (Optional)</Label>
-              <Input
-                id="openid-callback"
-                value={openidCallbackUrl}
-                onChange={(e) => setOpenidCallbackUrl(e.target.value)}
-                placeholder="https://yourapp.com/api/auth/openid/callback"
-                data-testid="input-openid-callback"
-              />
-            </div>
-
-            <p className="text-xs text-muted-foreground p-3 bg-muted/50 rounded">
-              Fill in your OpenID Connect provider details to enable SSO login. Leave empty to disable SSO.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-            <CardDescription>See how your changes will look</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-6 border rounded-md bg-background">
-              <div className="flex items-center gap-3">
                 {logoUrl && (
-                  <img
-                    src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
-                    alt="Logo"
-                    className="h-10 w-10 object-contain"
-                  />
+                  <div className="space-y-2">
+                    <Label>Current Logo Preview</Label>
+                    <div className="p-4 border rounded-md bg-muted/50 flex items-center justify-center">
+                      <img
+                        src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
+                        alt="Logo preview"
+                        className="max-h-32 object-contain"
+                      />
+                    </div>
+                  </div>
                 )}
-                <div>
-                  <h2 className="text-xl font-semibold">{siteName || "IT Portal"}</h2>
-                  <p className="text-sm text-muted-foreground">Service Management</p>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Login Page Settings */}
+            <AccordionItem value="login">
+              <AccordionTrigger className="text-lg font-semibold">
+                <Eye className="h-5 w-5 mr-2" />
+                Login Page Settings
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-title">Login Page Title</Label>
+                  <Input
+                    id="login-title"
+                    value={loginTitle}
+                    onChange={(e) => setLoginTitle(e.target.value)}
+                    placeholder="IT Portal"
+                    data-testid="input-login-title"
+                  />
                 </div>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This is how your branding will appear in the application header.
-            </p>
-            <div className="border-t pt-4">
-              <p className="text-xs text-muted-foreground mb-2">Login Page Preview:</p>
-              <div
-                className="p-6 rounded-md border"
-                style={{ backgroundColor: loginBgColor }}
-              >
-                <div className="bg-white dark:bg-slate-900 rounded-lg p-4">
-                  <h3 className="font-semibold text-lg">{loginTitle}</h3>
-                  <p className="text-sm text-muted-foreground mt-2">{loginDescription}</p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="login-description">Login Page Description</Label>
+                  <Textarea
+                    id="login-description"
+                    value={loginDescription}
+                    onChange={(e) => setLoginDescription(e.target.value)}
+                    placeholder="Manage your IT services, software, licenses, and support tickets"
+                    data-testid="input-login-description"
+                    className="resize-none"
+                    rows={3}
+                  />
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="login-bg-color">Background Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="login-bg-color"
+                      type="color"
+                      value={loginBgColor}
+                      onChange={(e) => setLoginBgColor(e.target.value)}
+                      data-testid="input-login-bg-color"
+                      className="h-12 w-20"
+                    />
+                    <Input
+                      type="text"
+                      value={loginBgColor}
+                      onChange={(e) => setLoginBgColor(e.target.value)}
+                      placeholder="#f5f5f5"
+                      data-testid="input-login-bg-color-text"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
+                  <Label htmlFor="enable-registration" className="cursor-pointer">
+                    Enable User Registration
+                  </Label>
+                  <Switch
+                    id="enable-registration"
+                    checked={enableRegistration}
+                    onCheckedChange={setEnableRegistration}
+                    data-testid="toggle-enable-registration"
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Branding Settings */}
+            <AccordionItem value="branding">
+              <AccordionTrigger className="text-lg font-semibold">
+                Branding
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cloudron-name">Organization Name</Label>
+                  <Input
+                    id="cloudron-name"
+                    value={cloudronName}
+                    onChange={(e) => setCloudronName(e.target.value)}
+                    placeholder="Riyadh Alafraa Systems"
+                    data-testid="input-cloudron-name"
+                  />
+                  <p className="text-xs text-muted-foreground">Your organization name (e.g., company or department)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="footer-text">Footer Text</Label>
+                  <Input
+                    id="footer-text"
+                    value={footerText}
+                    onChange={(e) => setFooterText(e.target.value)}
+                    placeholder="Riyadh Alafraa"
+                    data-testid="input-footer-text"
+                  />
+                  <p className="text-xs text-muted-foreground">Text displayed in the footer of every page</p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* SSO Settings */}
+            <AccordionItem value="sso">
+              <AccordionTrigger className="text-lg font-semibold">
+                <SettingsIcon className="h-5 w-5 mr-2" />
+                SSO Settings
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="openid-issuer">OpenID Issuer URL</Label>
+                  <Input
+                    id="openid-issuer"
+                    value={openidIssuerUrl}
+                    onChange={(e) => setOpenidIssuerUrl(e.target.value)}
+                    placeholder="https://my.example.com"
+                    data-testid="input-openid-issuer"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="openid-client-id">Client ID</Label>
+                  <Input
+                    id="openid-client-id"
+                    value={openidClientId}
+                    onChange={(e) => setOpenidClientId(e.target.value)}
+                    placeholder="your-client-id"
+                    data-testid="input-openid-client-id"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="openid-client-secret">Client Secret</Label>
+                  <Input
+                    id="openid-client-secret"
+                    type="password"
+                    value={openidClientSecret}
+                    onChange={(e) => setOpenidClientSecret(e.target.value)}
+                    placeholder="your-client-secret"
+                    data-testid="input-openid-client-secret"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="openid-callback">Callback URL (Optional)</Label>
+                  <Input
+                    id="openid-callback"
+                    value={openidCallbackUrl}
+                    onChange={(e) => setOpenidCallbackUrl(e.target.value)}
+                    placeholder="https://yourapp.com/api/auth/openid/callback"
+                    data-testid="input-openid-callback"
+                  />
+                </div>
+
+                <p className="text-xs text-muted-foreground p-3 bg-muted/50 rounded">
+                  Fill in your OpenID Connect provider details to enable SSO login. Leave empty to disable SSO.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Preview */}
+            <AccordionItem value="preview">
+              <AccordionTrigger className="text-lg font-semibold">
+                Preview
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="p-6 border rounded-md bg-background">
+                  <div className="flex items-center gap-3">
+                    {logoUrl && (
+                      <img
+                        src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
+                        alt="Logo"
+                        className="h-10 w-10 object-contain"
+                      />
+                    )}
+                    <div>
+                      <h2 className="text-xl font-semibold">{siteName || "IT Portal"}</h2>
+                      <p className="text-sm text-muted-foreground">Service Management</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  This is how your branding will appear in the application header.
+                </p>
+                <div className="border-t pt-4">
+                  <p className="text-xs text-muted-foreground mb-2">Login Page Preview:</p>
+                  <div
+                    className="p-6 rounded-md border"
+                    style={{ backgroundColor: loginBgColor }}
+                  >
+                    <div className="bg-white dark:bg-slate-900 rounded-lg p-4">
+                      <h3 className="font-semibold text-lg">{loginTitle}</h3>
+                      <p className="text-sm text-muted-foreground mt-2">{loginDescription}</p>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      <Button
+        onClick={() => saveMutation.mutate()}
+        disabled={saveMutation.isPending || uploadProgress || isLoading}
+        className="w-full"
+        data-testid="button-save-settings"
+        size="lg"
+      >
+        <Save className="mr-2 h-4 w-4" />
+        {uploadProgress ? "Uploading..." : saveMutation.isPending ? "Saving..." : "Save All Settings"}
+      </Button>
     </div>
   );
 }
