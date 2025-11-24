@@ -203,7 +203,6 @@ const translations = {
     clientOnly: 'المستخدمون العاديون فقط',
     ofUsers: 'من المستخدمين',
     name: 'الاسم',
-    email: 'البريد الإلكتروني',
     role: 'الدور',
     joined: 'تاريخ الانضمام',
     actions: 'الإجراءات',
