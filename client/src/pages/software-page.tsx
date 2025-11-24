@@ -441,8 +441,8 @@ export default function SoftwarePage() {
                               <Download className="h-4 w-4" />
                             </Button>
                           )}
-                          {sw.filePath && (
-                            sw.isShared && sw.shareCode ? (
+                          {sw.filePath && sw.isShared ? (
+                            sw.shareCode ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -467,7 +467,7 @@ export default function SoftwarePage() {
                                 <Share2 className="h-4 w-4" />
                               </Button>
                             )
-                          )}
+                          ) : null}
                           <Button
                             variant="outline"
                             size="sm"
