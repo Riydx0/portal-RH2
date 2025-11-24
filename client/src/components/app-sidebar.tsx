@@ -40,6 +40,7 @@ import {
   Globe,
   DollarSign,
   Mail,
+  Code,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,14 @@ export function AppSidebar() {
       url: "/wireguard",
       icon: Lock,
       show: isAdmin,
+    },
+
+    // Developer Section
+    {
+      title: "API Keys",
+      url: "/api-keys",
+      icon: Code,
+      show: true, // Available for all authenticated users
     },
     {
       title: t('firewall', lang),

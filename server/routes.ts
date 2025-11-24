@@ -40,6 +40,7 @@ import {
   software,
   licenses,
   tickets,
+  apiKeys,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -1356,6 +1357,194 @@ export function registerRoutes(app: Express): Server {
       res.setHeader("Content-Type", "application/octet-stream");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.send(config);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // API Keys Management (Developer API)
+  app.get("/api/dev/keys", requireAuth, async (req, res) => {
+    try {
+      const keys = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.userId, req.user.id))
+        .orderBy(desc(apiKeys.createdAt));
+      
+      res.json(keys.map(k => ({
+        ...k,
+        secret: undefined // Don't return secret on list
+      })));
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/dev/keys", requireAuth, async (req, res) => {
+    try {
+      const { name, rateLimit } = req.body;
+      
+      // Generate random key and secret
+      const key = "sk_" + Math.random().toString(36).substring(2, 15);
+      const secret = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const result = await db
+        .insert(apiKeys)
+        .values({
+          key,
+          secret,
+          name,
+          userId: req.user.id,
+          rateLimit: rateLimit || 1000,
+          permissions: ["read", "write"],
+        })
+        .returning();
+      
+      res.status(201).json(result[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/dev/keys/:id", requireAuth, async (req, res) => {
+    try {
+      const keyId = parseInt(req.params.id);
+      const apiKey = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.id, keyId))
+        .limit(1);
+      
+      if (!apiKey.length || apiKey[0].userId !== req.user.id) {
+        return res.status(403).send("Unauthorized");
+      }
+      
+      await db.delete(apiKeys).where(eq(apiKeys.id, keyId));
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.patch("/api/dev/keys/:id/toggle", requireAuth, async (req, res) => {
+    try {
+      const keyId = parseInt(req.params.id);
+      const apiKey = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.id, keyId))
+        .limit(1);
+      
+      if (!apiKey.length || apiKey[0].userId !== req.user.id) {
+        return res.status(403).send("Unauthorized");
+      }
+      
+      const result = await db
+        .update(apiKeys)
+        .set({ isActive: !apiKey[0].isActive })
+        .where(eq(apiKeys.id, keyId))
+        .returning();
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // API Key Middleware
+  async function validateApiKey(req: any, res: any, next: any) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Missing or invalid API key" });
+    }
+    
+    const key = authHeader.substring(7);
+    try {
+      const apiKey = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.key, key))
+        .limit(1);
+      
+      if (!apiKey.length || !apiKey[0].isActive) {
+        return res.status(401).json({ error: "Invalid API key" });
+      }
+      
+      if (apiKey[0].expiresAt && new Date(apiKey[0].expiresAt) < new Date()) {
+        return res.status(401).json({ error: "API key expired" });
+      }
+      
+      // Update last used timestamp
+      await db
+        .update(apiKeys)
+        .set({ lastUsed: new Date() })
+        .where(eq(apiKeys.id, apiKey[0].id));
+      
+      req.apiKey = apiKey[0];
+      next();
+    } catch (error: any) {
+      res.status(401).json({ error: "Invalid API key" });
+    }
+  }
+
+  // Public API Endpoints (require API key)
+  app.get("/api/public/software", validateApiKey, async (req, res) => {
+    try {
+      const result = await db
+        .select()
+        .from(software)
+        .where(eq(software.isActive, true));
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/public/categories", validateApiKey, async (req, res) => {
+    try {
+      const result = await db.select().from(categories);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/public/licenses", validateApiKey, async (req, res) => {
+    try {
+      const result = await db.select().from(licenses);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/public/share-download", validateApiKey, async (req, res) => {
+    try {
+      const { secretCode } = req.body;
+      
+      if (!secretCode) {
+        return res.status(400).send("Secret code required");
+      }
+
+      const [link] = await db
+        .select()
+        .from(shareLinks)
+        .where(eq(shareLinks.secretCode, secretCode));
+      
+      if (!link) {
+        return res.status(404).send("Invalid secret code");
+      }
+
+      const [sw] = await db
+        .select()
+        .from(software)
+        .where(eq(software.id, link.softwareId));
+      
+      if (!sw || !sw.filePath) {
+        return res.status(404).send("File not found");
+      }
+
+      res.json({ filePath: sw.filePath, name: sw.name });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

@@ -45,6 +45,8 @@ import EmailSettingsPage from "@/pages/email-settings-page";
 import SubmitTicketPage from "@/pages/submit-ticket-page";
 import RequestLicensePage from "@/pages/request-license-page";
 import WireGuardPage from "@/pages/wireguard-page";
+import ApiKeysPage from "@/pages/api-keys-page";
+import ApiDocsPage from "@/pages/api-docs-page";
 
 function Router() {
   return (
@@ -82,6 +84,8 @@ function Router() {
       <ProtectedRoute path="/submit-ticket" component={SubmitTicketPage} />
       <ProtectedRoute path="/request-license" component={RequestLicensePage} />
       <ProtectedRoute path="/wireguard" component={WireGuardPage} />
+      <ProtectedRoute path="/api-keys" component={ApiKeysPage} />
+      <Route path="/api-docs" component={ApiDocsPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

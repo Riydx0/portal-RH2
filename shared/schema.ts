@@ -249,6 +249,20 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const apiKeys = pgTable("api_keys", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  key: text("key").notNull().unique(),
+  secret: text("secret").notNull(),
+  name: text("name").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isActive: boolean("is_active").notNull().default(true),
+  lastUsed: timestamp("last_used"),
+  rateLimit: integer("rate_limit").default(1000), // requests per hour
+  permissions: text("permissions").array().default(sql`ARRAY['read', 'write']`), // read, write, admin
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
 // Schemas & Types
 export const insertNetworkSchema = createInsertSchema(networks).omit({
   id: true,
@@ -467,3 +481,11 @@ export const insertUserGroupSchema = createInsertSchema(userGroups).omit({
   createdAt: true,
 });
 export type InsertUserGroup = z.infer<typeof insertUserGroupSchema>;
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
+  id: true,
+  createdAt: true,
+  lastUsed: true,
+});
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
