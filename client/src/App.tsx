@@ -89,7 +89,7 @@ function AppContent() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
+      <div className={`flex h-screen w-full ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="flex items-center justify-between p-2 border-b bg-background gap-2 px-4">
