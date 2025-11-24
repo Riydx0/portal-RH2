@@ -23,6 +23,7 @@ import {
   Shield,
   User,
   Users,
+  Settings,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,12 @@ export function AppSidebar() {
       title: "Licenses",
       url: "/licenses",
       icon: Key,
+      show: isAdmin,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: Settings,
       show: isAdmin,
     },
   ];

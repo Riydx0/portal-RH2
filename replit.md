@@ -55,6 +55,9 @@ Preferred communication style: Simple, everyday language.
 - Resource endpoints for categories, software, licenses, tickets, users
 - Stats endpoint for dashboard metrics
 - Recent tickets endpoint for dashboard overview
+- File upload endpoint (`POST /api/upload`) with security validation
+- File download endpoint (`GET /api/download/:filename`) with path traversal protection
+- Settings endpoints (`GET /api/settings`, `GET /api/settings/:key`, `PATCH /api/settings/:key`) - admin-only
 
 **Authentication & Authorization**:
 - Passport.js with Local Strategy for session-based authentication
@@ -84,8 +87,9 @@ Preferred communication style: Simple, everyday language.
    - Soft-delete pattern via software relationships
 
 3. **Software Table**
-   - Fields: id, name, categoryId (FK), description, downloadUrl, version, platform, isActive, timestamps
+   - Fields: id, name, categoryId (FK), description, downloadUrl, filePath, fileSize, version, platform, isActive, timestamps
    - Platform enum: Windows, Mac, Both
+   - File upload support: filePath stores uploaded filename, fileSize stores file size in bytes
    - Cascade delete on category removal
 
 4. **Licenses Table**
@@ -102,6 +106,11 @@ Preferred communication style: Simple, everyday language.
 6. **Ticket Comments Table**
    - Fields: id, ticketId (FK), userId (FK), content, timestamps
    - Cascade delete on ticket removal
+
+7. **Settings Table**
+   - Fields: key (primary), value, createdAt, updatedAt
+   - Key-value store for application configuration
+   - Admin-only access for all CRUD operations
 
 **Database Relationships**:
 - One-to-many: Categories → Software, Software → Licenses, Tickets → Comments, Users → Tickets (as creator/assignee)

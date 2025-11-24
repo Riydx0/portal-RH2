@@ -95,6 +95,13 @@ export const devices = pgTable("devices", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const settings = pgTable("settings", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),
   assignedTickets: many(tickets, { relationName: "assignedTo" }),
@@ -206,6 +213,11 @@ export const insertDeviceSchema = createInsertSchema(devices).omit({
   updatedAt: true,
 });
 
+export const insertSettingSchema = createInsertSchema(settings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -229,3 +241,6 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 
 export type Device = typeof devices.$inferSelect;
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
+
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;

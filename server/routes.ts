@@ -13,7 +13,9 @@ import {
   insertLicenseSchema,
   insertTicketSchema,
   insertTicketCommentSchema,
+  settings,
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -460,6 +462,61 @@ export function registerRoutes(app: Express): Server {
       const data = insertTicketCommentSchema.parse(req.body);
       const comment = await storage.createTicketComment(data);
       res.status(201).json(comment);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.get("/api/settings", requireAdmin, async (req, res) => {
+    try {
+      const result = await db.select().from(settings);
+      const settingsMap: Record<string, string> = {};
+      result.forEach((setting) => {
+        settingsMap[setting.key] = setting.value || "";
+      });
+      res.json(settingsMap);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/settings/:key", requireAdmin, async (req, res) => {
+    try {
+      const result = await db
+        .select()
+        .from(settings)
+        .where(eq(settings.key, req.params.key))
+        .limit(1);
+      
+      if (result.length === 0) {
+        return res.status(404).send("Setting not found");
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.patch("/api/settings/:key", requireAdmin, async (req, res) => {
+    try {
+      const updateSchema = z.object({
+        value: z.string().max(1000),
+      });
+      
+      const { value } = updateSchema.parse(req.body);
+      
+      const result = await db
+        .update(settings)
+        .set({ value, updatedAt: new Date() })
+        .where(eq(settings.key, req.params.key))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).send("Setting not found");
+      }
+      
+      res.json(result[0]);
     } catch (error: any) {
       res.status(400).send(error.message);
     }

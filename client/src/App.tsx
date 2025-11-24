@@ -18,6 +18,7 @@ import TicketsPage from "@/pages/tickets-page";
 import NewTicketPage from "@/pages/new-ticket-page";
 import TicketDetailPage from "@/pages/ticket-detail-page";
 import UsersPage from "@/pages/users-page";
+import SettingsPage from "@/pages/settings-page";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/tickets" component={TicketsPage} />
       <ProtectedRoute path="/tickets/new" component={NewTicketPage} />
       <ProtectedRoute path="/tickets/:id" component={TicketDetailPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
