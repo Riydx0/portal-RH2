@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useLanguage, t } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 const plans = [
   {
@@ -84,7 +84,7 @@ const plans = [
 export default function PricingPage() {
   const { lang } = useLanguage();
   const { user } = useAuth();
-  const [, navigate] = useNavigate();
+  const [location, setLocation] = useLocation();
 
   const isArabic = lang === "ar";
 
@@ -164,7 +164,7 @@ export default function PricingPage() {
               <Button
                 className="w-full mt-6"
                 variant={plan.popular ? "default" : "outline"}
-                onClick={() => navigate("/auth")}
+                onClick={() => setLocation(user ? "/" : "/auth")}
               >
                 {user ? (isArabic ? "ترقية الآن" : "Upgrade Now") : isArabic ? "ابدأ الآن" : "Get Started"}
               </Button>

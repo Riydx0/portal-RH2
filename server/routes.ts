@@ -29,8 +29,16 @@ import {
   insertNetworkSchema,
   insertVpnConfigSchema,
   insertFirewallRuleSchema,
+  subscriptionPlans,
+  subscriptions,
+  invoices,
+  softwarePricing,
+  insertSubscriptionPlanSchema,
+  insertSubscriptionSchema,
+  insertInvoiceSchema,
+  insertSoftwarePricingSchema,
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -959,6 +967,165 @@ export function registerRoutes(app: Express): Server {
     try {
       await db.delete(firewallRules).where(eq(firewallRules.id, parseInt(req.params.id)));
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Subscription Plans endpoints
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await db.query.subscriptionPlans.findMany({
+        where: (table) => eq(table.isActive, true),
+        orderBy: (table) => [table.price],
+      });
+      res.json(plans);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // User Subscriptions endpoints
+  app.get("/api/subscriptions/me", requireAuth, async (req, res) => {
+    try {
+      const subscription = await db.query.subscriptions.findFirst({
+        where: (table) => eq(table.userId, req.user!.id),
+        with: {
+          plan: true,
+        },
+      });
+      res.json(subscription || null);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/subscriptions", requireAuth, async (req, res) => {
+    try {
+      const { planId } = insertSubscriptionSchema.parse(req.body);
+
+      const plan = await db.query.subscriptionPlans.findFirst({
+        where: (table) => eq(table.id, planId),
+      });
+
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      const existingSubscription = await db.query.subscriptions.findFirst({
+        where: (table) => eq(table.userId, req.user!.id),
+      });
+
+      if (existingSubscription) {
+        const updated = await db
+          .update(subscriptions)
+          .set({
+            planId,
+            status: "active",
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptions.userId, req.user!.id))
+          .returning();
+
+        return res.json(updated[0]);
+      }
+
+      const newSubscription = await db
+        .insert(subscriptions)
+        .values({
+          userId: req.user!.id,
+          planId,
+          status: "active",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .returning();
+
+      res.json(newSubscription[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.post("/api/subscriptions/:id/cancel", requireAuth, async (req, res) => {
+    try {
+      const updated = await db
+        .update(subscriptions)
+        .set({
+          status: "canceled",
+          canceledAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.id, parseInt(req.params.id)))
+        .returning();
+
+      res.json(updated[0]);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Invoices endpoints
+  app.get("/api/invoices", async (req, res) => {
+    try {
+      const allInvoices = await db.query.invoices.findMany({
+        orderBy: (table) => [desc(table.createdAt)],
+        limit: 100,
+      });
+      res.json(allInvoices);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/invoices/my", requireAuth, async (req, res) => {
+    try {
+      const userInvoices = await db.query.invoices.findMany({
+        where: (table) => eq(table.clientId, req.user!.id),
+        orderBy: (table) => [desc(table.createdAt)],
+      });
+      res.json(userInvoices);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/invoices/:id", async (req, res) => {
+    try {
+      const invoice = await db.query.invoices.findFirst({
+        where: (table) => eq(table.id, parseInt(req.params.id)),
+      });
+
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Software Pricing endpoints
+  app.get("/api/software-pricing", async (req, res) => {
+    try {
+      const pricing = await db.query.softwarePricing.findMany({
+        where: (table) => eq(table.isActive, true),
+      });
+      res.json(pricing);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/software-pricing/software/:softwareId", async (req, res) => {
+    try {
+      const pricing = await db.query.softwarePricing.findMany({
+        where: (table) => eq(table.softwareId, parseInt(req.params.softwareId)),
+      });
+      res.json(pricing);
     } catch (error: any) {
       res.status(500).send(error.message);
     }
