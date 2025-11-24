@@ -36,7 +36,6 @@ export function AppSidebar() {
   const [location] = useLocation();
 
   const isAdmin = user?.role === "admin";
-  const isTech = user?.role === "tech" || user?.role === "admin";
 
   const menuItems = [
     {
@@ -96,8 +95,6 @@ export function AppSidebar() {
     switch (role) {
       case "admin":
         return "default";
-      case "tech":
-        return "secondary";
       default:
         return "outline";
     }

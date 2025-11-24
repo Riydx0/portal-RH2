@@ -305,7 +305,7 @@ export default function TicketDetailPage() {
             </CardContent>
           </Card>
 
-          {(user?.role === "admin" || user?.role === "tech") && (
+          {(user?.role === "admin") && (
             <Card>
               <CardHeader>
                 <CardTitle>Assignment</CardTitle>
@@ -324,7 +324,7 @@ export default function TicketDetailPage() {
                   <SelectContent>
                     <SelectItem value="unassigned">Unassigned</SelectItem>
                     {users
-                      ?.filter((u) => u.role === "admin" || u.role === "tech")
+                      ?.filter((u) => u.role === "admin")
                       .map((u) => (
                         <SelectItem key={u.id} value={u.id.toString()}>
                           {u.name}

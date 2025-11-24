@@ -17,16 +17,6 @@ async function seed() {
       })
       .returning();
 
-    console.log("Creating tech user...");
-    const [tech] = await db
-      .insert(users)
-      .values({
-        name: "Tech Support",
-        email: "tech@example.com",
-        password: await hashPassword("Tech123!"),
-        role: "tech",
-      })
-      .returning();
 
     console.log("Creating client user...");
     const [client] = await db
@@ -175,7 +165,7 @@ async function seed() {
         status: "open",
         priority: "high",
         createdBy: client.id,
-        assignedTo: tech.id,
+        assignedTo: admin.id,
       })
       .returning();
 
@@ -199,13 +189,13 @@ async function seed() {
       status: "closed",
       priority: "normal",
       createdBy: client.id,
-      assignedTo: tech.id,
+      assignedTo: admin.id,
     });
 
     console.log("Creating ticket comments...");
     await db.insert(ticketComments).values({
       ticketId: ticket1.id,
-      userId: tech.id,
+      userId: admin.id,
       comment:
         "I've checked the error code. This usually happens when there's a conflict with Windows Update. Can you try running Windows Update first and then retry the installation?",
     });
@@ -220,7 +210,6 @@ async function seed() {
     console.log("✅ Database seeding completed successfully!");
     console.log("\nDefault users created:");
     console.log("  Admin: admin@example.com / Admin123!");
-    console.log("  Tech: tech@example.com / Tech123!");
     console.log("  Client: client@example.com / Client123!");
   } catch (error) {
     console.error("❌ Error seeding database:", error);

@@ -172,7 +172,6 @@ export default function UsersPage() {
   const getRoleBadge = (role: string) => {
     const roleConfig = {
       admin: { icon: Shield, variant: "destructive" as const, label: "Admin" },
-      tech: { icon: UserCog, variant: "default" as const, label: "Technician" },
       client: { icon: UserIcon, variant: "secondary" as const, label: "Client" },
     };
     const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.client;
@@ -260,7 +259,6 @@ export default function UsersPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="tech">Technician</SelectItem>
                           <SelectItem value="client">Client</SelectItem>
                         </SelectContent>
                       </Select>
@@ -406,7 +404,6 @@ export default function UsersPage() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="tech">Technician</SelectItem>
                         <SelectItem value="client">Client</SelectItem>
                       </SelectContent>
                     </Select>
