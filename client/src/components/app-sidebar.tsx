@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage, t } from "@/lib/i18n";
 import {
@@ -40,6 +41,7 @@ export function AppSidebar() {
   const { user, logoutMutation } = useAuth();
   const { lang } = useLanguage();
   const [location] = useLocation();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -215,16 +217,18 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/settings" || location.startsWith("/settings/")}>
-                  <Link href="/settings" data-testid="link-settings">
-                    <Settings className="h-4 w-4" />
-                    <span>{t('settings', lang)}</span>
-                    {settingsItems.length > 0 || adminSettingsItems.length > 0 ? (
-                      <ChevronRight className="h-4 w-4 ml-auto" />
-                    ) : null}
-                  </Link>
+                <SidebarMenuButton 
+                  onClick={() => setSettingsOpen(!settingsOpen)}
+                  isActive={location === "/settings" || location.startsWith("/settings/")}
+                  data-testid="button-settings"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>{t('settings', lang)}</span>
+                  {(settingsItems.length > 0 || adminSettingsItems.length > 0) && (
+                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`} />
+                  )}
                 </SidebarMenuButton>
-                {(settingsItems.length > 0 || adminSettingsItems.length > 0) && (
+                {settingsOpen && (settingsItems.length > 0 || adminSettingsItems.length > 0) && (
                   <SidebarMenuSub>
                     {settingsItems.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.url}>
