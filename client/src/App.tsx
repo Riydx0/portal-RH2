@@ -20,6 +20,9 @@ import NewTicketPage from "@/pages/new-ticket-page";
 import TicketDetailPage from "@/pages/ticket-detail-page";
 import UsersPage from "@/pages/users-page";
 import SettingsPage from "@/pages/settings-page";
+import AppearanceSettingsPage from "@/pages/appearance-settings-page";
+import BrandingSettingsPage from "@/pages/branding-settings-page";
+import SSOSettingsPage from "@/pages/sso-settings-page";
 import GroupsPage from "@/pages/groups-page";
 
 function Router() {
@@ -38,6 +41,9 @@ function Router() {
       <ProtectedRoute path="/tickets/new" component={NewTicketPage} />
       <ProtectedRoute path="/tickets/:id" component={TicketDetailPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/settings/appearance" component={AppearanceSettingsPage} />
+      <ProtectedRoute path="/settings/branding" component={BrandingSettingsPage} />
+      <ProtectedRoute path="/settings/sso" component={SSOSettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -10,6 +10,9 @@ import {
   SidebarMenuItem,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -24,6 +27,7 @@ import {
   User,
   Users,
   Settings,
+  ChevronRight,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -97,6 +101,24 @@ export function AppSidebar() {
     },
   ];
 
+  const settingsItems = [
+    {
+      title: "Appearance",
+      url: "/settings/appearance",
+      show: isAdmin,
+    },
+    {
+      title: "Branding",
+      url: "/settings/branding",
+      show: isAdmin,
+    },
+    {
+      title: "SSO Settings",
+      url: "/settings/sso",
+      show: isAdmin,
+    },
+  ];
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin":
@@ -158,12 +180,35 @@ export function AppSidebar() {
                 {adminItems.map((item) =>
                   item.show ? (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={location === item.url}>
-                        <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      {item.title === "Settings" ? (
+                        <>
+                          <SidebarMenuButton asChild isActive={location === item.url}>
+                            <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                              <ChevronRight className="h-4 w-4 ml-auto" />
+                            </Link>
+                          </SidebarMenuButton>
+                          <SidebarMenuSub>
+                            {settingsItems.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.url}>
+                                <SidebarMenuSubButton asChild isActive={location === subItem.url}>
+                                  <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
+                                    <span>{subItem.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </>
+                      ) : (
+                        <SidebarMenuButton asChild isActive={location === item.url}>
+                          <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      )}
                     </SidebarMenuItem>
                   ) : null
                 )}
