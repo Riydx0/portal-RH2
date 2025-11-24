@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import * as LucideIcons from "lucide-react";
 import { HardDrive, Key, Ticket, CheckCircle, AlertCircle, FolderTree, Bell, ExternalLink as ExternalLinkIcon, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,13 @@ type DashboardStats = {
 type RecentTicket = TicketType & {
   creator: { name: string };
 };
+
+function getIconComponent(iconName: string | null | undefined) {
+  if (!iconName) return null;
+  const name = iconName.charAt(0).toUpperCase() + iconName.slice(1);
+  const Icon = (LucideIcons as any)[name];
+  return Icon || null;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -200,24 +208,33 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 md:grid-cols-2">
-              {externalLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-md border hover-elevate transition-colors bg-muted/50 hover:bg-muted"
-                  data-testid={`external-link-${link.id}`}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{link.title}</p>
-                    {link.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{link.description}</p>
-                    )}
-                  </div>
-                  <ExternalLinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                </a>
-              ))}
+              {externalLinks.map((link) => {
+                const IconComponent = getIconComponent(link.icon);
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-md border hover-elevate transition-colors bg-muted/50 hover:bg-muted"
+                    data-testid={`external-link-${link.id}`}
+                  >
+                    <div className="flex-shrink-0">
+                      {IconComponent ? (
+                        <IconComponent className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ExternalLinkIcon className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{link.title}</p>
+                      {link.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-1">{link.description}</p>
+                      )}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

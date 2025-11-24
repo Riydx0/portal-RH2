@@ -18,7 +18,7 @@ export default function ExternalLinksPage() {
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ title: "", url: "", icon: "" });
+  const [formData, setFormData] = useState({ title: "", url: "", icon: "", description: "" });
 
   const { data: links = [], isLoading } = useQuery<ExternalLink[]>({
     queryKey: ["/api/external-links"],
@@ -29,13 +29,14 @@ export default function ExternalLinksPage() {
       return apiRequest("POST", "/api/external-links", {
         title: formData.title,
         url: formData.url,
+        description: formData.description || null,
         icon: formData.icon || "ExternalLink",
         order: links.length,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/external-links"] });
-      setFormData({ title: "", url: "", icon: "" });
+      setFormData({ title: "", url: "", icon: "", description: "" });
       setIsAdding(false);
       toast({
         title: "Success",
@@ -49,12 +50,13 @@ export default function ExternalLinksPage() {
       return apiRequest("PATCH", `/api/external-links/${editingId}`, {
         title: formData.title,
         url: formData.url,
+        description: formData.description || null,
         icon: formData.icon || "ExternalLink",
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/external-links"] });
-      setFormData({ title: "", url: "", icon: "" });
+      setFormData({ title: "", url: "", icon: "", description: "" });
       setEditingId(null);
       toast({
         title: "Success",
@@ -81,6 +83,7 @@ export default function ExternalLinksPage() {
     setFormData({
       title: link.title,
       url: link.url,
+      description: link.description || "",
       icon: link.icon || "ExternalLink",
     });
   };
@@ -117,7 +120,7 @@ export default function ExternalLinksPage() {
           onClick={() => {
             setIsAdding(!isAdding);
             setEditingId(null);
-            setFormData({ title: "", url: "", icon: "" });
+            setFormData({ title: "", url: "", icon: "", description: "" });
           }}
           data-testid="button-add-external-link"
         >
@@ -151,6 +154,17 @@ export default function ExternalLinksPage() {
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 placeholder="https://example.com"
                 data-testid="input-link-url"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief description of this link"
+                data-testid="input-link-description"
               />
             </div>
 

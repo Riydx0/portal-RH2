@@ -109,6 +109,7 @@ export const externalLinks = pgTable("external_links", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   title: text("title").notNull(),
   url: text("url").notNull(),
+  description: text("description"),
   icon: text("icon"),
   order: integer("order").default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),

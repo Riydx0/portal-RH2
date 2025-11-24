@@ -878,6 +878,7 @@ export function registerRoutes(app: Express): Server {
       const data = insertNetworkSchema.parse(req.body);
       const created = await db.insert(networks).values(data).returning();
       res.json(created[0]);
+      
     } catch (error: any) {
       res.status(400).send(error.message);
     }
