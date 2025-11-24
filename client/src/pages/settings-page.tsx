@@ -9,10 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Upload, Save, Eye } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Redirect } from "wouter";
 
 type SettingsData = Record<string, string>;
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { toast } = useToast();
   const [siteName, setSiteName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -129,6 +133,11 @@ export default function SettingsPage() {
       });
     },
   });
+
+  // Only admins can access settings main page
+  if (!isAdmin) {
+    return <Redirect to="/settings/change-password" />;
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6 lg:p-8">
