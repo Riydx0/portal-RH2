@@ -42,6 +42,7 @@ export function AppSidebar() {
   const { lang } = useLanguage();
   const [location] = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -190,23 +191,35 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
+        {isAdmin && adminItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>{t('administration', lang)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) =>
-                  item.show ? (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={location === item.url}>
-                        <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ) : null
-                )}
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={() => setAdminOpen(!adminOpen)}
+                    data-testid="button-administration"
+                  >
+                    <span className="font-semibold">{t('administration', lang)}</span>
+                    <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${adminOpen ? 'rotate-90' : ''}`} />
+                  </SidebarMenuButton>
+                  {adminOpen && (
+                    <SidebarMenuSub>
+                      {adminItems.map((item) =>
+                        item.show ? (
+                          <SidebarMenuSubItem key={item.title}>
+                            <SidebarMenuSubButton asChild isActive={location === item.url}>
+                              <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ) : null
+                      )}
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
