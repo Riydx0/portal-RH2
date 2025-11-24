@@ -17,12 +17,14 @@ import LicensesPage from "@/pages/licenses-page";
 import TicketsPage from "@/pages/tickets-page";
 import NewTicketPage from "@/pages/new-ticket-page";
 import TicketDetailPage from "@/pages/ticket-detail-page";
+import UsersPage from "@/pages/users-page";
 
 function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
+      <ProtectedRoute path="/users" component={UsersPage} />
       <ProtectedRoute path="/categories" component={CategoriesPage} />
       <ProtectedRoute path="/software" component={SoftwarePage} />
       <ProtectedRoute path="/downloads" component={DownloadsPage} />

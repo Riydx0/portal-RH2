@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { db } from "./db";
 import {
+  insertUserSchema,
   insertCategorySchema,
   insertSoftwareSchema,
   insertLicenseSchema,
@@ -42,6 +43,41 @@ export function registerRoutes(app: Express): Server {
       const users = await storage.getAllUsers();
       const sanitizedUsers = users.map(({ password, ...user }) => user);
       res.json(sanitizedUsers);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const data = insertUserSchema.parse(req.body);
+      const hashedPassword = await hashPassword(data.password);
+      const user = await storage.createUser({ ...data, password: hashedPassword });
+      const { password, ...sanitizedUser } = user;
+      res.status(201).json(sanitizedUser);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const updateData = req.body;
+      if (updateData.password) {
+        updateData.password = await hashPassword(updateData.password);
+      }
+      const user = await storage.updateUser(parseInt(req.params.id), updateData);
+      const { password, ...sanitizedUser } = user;
+      res.json(sanitizedUser);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUser(parseInt(req.params.id));
+      res.sendStatus(204);
     } catch (error: any) {
       res.status(500).send(error.message);
     }
