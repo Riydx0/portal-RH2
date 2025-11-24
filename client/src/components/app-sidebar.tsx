@@ -66,6 +66,12 @@ export function AppSidebar() {
       show: isAdmin,
     },
     {
+      title: "Groups",
+      url: "/groups",
+      icon: Shield,
+      show: isAdmin,
+    },
+    {
       title: "Categories",
       url: "/categories",
       icon: FolderTree,

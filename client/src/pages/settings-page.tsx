@@ -24,6 +24,8 @@ export default function SettingsPage() {
   const [openidClientId, setOpenidClientId] = useState("");
   const [openidClientSecret, setOpenidClientSecret] = useState("");
   const [openidCallbackUrl, setOpenidCallbackUrl] = useState("");
+  const [footerText, setFooterText] = useState("");
+  const [cloudronName, setCloudronName] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
@@ -43,6 +45,8 @@ export default function SettingsPage() {
       setOpenidClientId(settings.openid_client_id || "");
       setOpenidClientSecret(settings.openid_client_secret || "");
       setOpenidCallbackUrl(settings.openid_callback_url || "");
+      setFooterText(settings.footer_text || "");
+      setCloudronName(settings.cloudron_name || "");
     }
   }, [settings]);
 
@@ -104,6 +108,8 @@ export default function SettingsPage() {
       await apiRequest("PATCH", "/api/settings/openid_client_id", { value: openidClientId });
       await apiRequest("PATCH", "/api/settings/openid_client_secret", { value: openidClientSecret });
       await apiRequest("PATCH", "/api/settings/openid_callback_url", { value: openidCallbackUrl });
+      await apiRequest("PATCH", "/api/settings/footer_text", { value: footerText });
+      await apiRequest("PATCH", "/api/settings/cloudron_name", { value: cloudronName });
 
       return true;
     },
@@ -267,6 +273,38 @@ export default function SettingsPage() {
                 onCheckedChange={setEnableRegistration}
                 data-testid="toggle-enable-registration"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Branding</CardTitle>
+            <CardDescription>Customize your platform branding</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cloudron-name">Organization Name</Label>
+              <Input
+                id="cloudron-name"
+                value={cloudronName}
+                onChange={(e) => setCloudronName(e.target.value)}
+                placeholder="Riyadh Alafraa Systems"
+                data-testid="input-cloudron-name"
+              />
+              <p className="text-xs text-muted-foreground">Your organization name (e.g., company or department)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="footer-text">Footer Text</Label>
+              <Input
+                id="footer-text"
+                value={footerText}
+                onChange={(e) => setFooterText(e.target.value)}
+                placeholder="Riyadh Alafraa"
+                data-testid="input-footer-text"
+              />
+              <p className="text-xs text-muted-foreground">Text displayed in the footer of every page</p>
             </div>
           </CardContent>
         </Card>

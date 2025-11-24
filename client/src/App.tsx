@@ -20,6 +20,7 @@ import NewTicketPage from "@/pages/new-ticket-page";
 import TicketDetailPage from "@/pages/ticket-detail-page";
 import UsersPage from "@/pages/users-page";
 import SettingsPage from "@/pages/settings-page";
+import GroupsPage from "@/pages/groups-page";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/download/:secretCode" component={ShareDownloadPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
+      <ProtectedRoute path="/groups" component={GroupsPage} />
       <ProtectedRoute path="/categories" component={CategoriesPage} />
       <ProtectedRoute path="/software" component={SoftwarePage} />
       <ProtectedRoute path="/downloads" component={DownloadsPage} />

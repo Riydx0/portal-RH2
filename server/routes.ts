@@ -18,8 +18,10 @@ import {
   externalLinks,
   notifications,
   shareLinks,
+  groups,
   insertExternalLinkSchema,
   insertShareLinkSchema,
+  insertGroupSchema,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -698,6 +700,54 @@ export function registerRoutes(app: Express): Server {
       }
 
       res.json({ filePath: sw.filePath, name: sw.name });
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Groups
+  app.get("/api/groups", requireAdmin, async (req, res) => {
+    try {
+      const result = await db.select().from(groups).orderBy(groups.name);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/groups", requireAdmin, async (req, res) => {
+    try {
+      const data = insertGroupSchema.parse(req.body);
+      const result = await db.insert(groups).values(data).returning();
+      res.status(201).json(result[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/groups/:id", requireAdmin, async (req, res) => {
+    try {
+      const data = insertGroupSchema.partial().parse(req.body);
+      const result = await db
+        .update(groups)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(groups.id, parseInt(req.params.id)))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).send("Group not found");
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/groups/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(groups).where(eq(groups.id, parseInt(req.params.id)));
+      res.sendStatus(204);
     } catch (error: any) {
       res.status(500).send(error.message);
     }

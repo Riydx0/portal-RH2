@@ -38,7 +38,6 @@ export default function DashboardPage() {
 
   const { data: externalLinks = [], isLoading: linksLoading } = useQuery<ExternalLink[]>({
     queryKey: ["/api/external-links"],
-    enabled: isAdmin,
   });
 
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery<Notification[]>({
@@ -162,70 +161,70 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {isAdmin && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {externalLinks && externalLinks.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ExternalLinkIcon className="h-5 w-5" />
-                  Quick Links
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-2">
-                  {externalLinks.map((link) => (
-                    <a
-                      key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-md border hover-elevate transition-colors bg-muted/50 hover:bg-muted"
-                      data-testid={`external-link-${link.id}`}
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{link.title}</p>
-                      </div>
-                      <ExternalLinkIcon className="h-4 w-4 text-muted-foreground" />
-                    </a>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {unreadNotifications.length > 0 && (
-            <Card className="border-yellow-500/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
-                  <Bell className="h-5 w-5" />
-                  Notifications ({unreadNotifications.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {unreadNotifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800"
-                      data-testid={`notification-${notif.id}`}
-                    >
-                      <p className="font-medium text-sm text-yellow-900 dark:text-yellow-100">
-                        {notif.title}
-                      </p>
-                      <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                        {notif.message}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+      {externalLinks && externalLinks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ExternalLinkIcon className="h-5 w-5" />
+              External Links
+            </CardTitle>
+            <CardDescription>Quick access to external services and resources</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 md:grid-cols-2">
+              {externalLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-md border hover-elevate transition-colors bg-muted/50 hover:bg-muted"
+                  data-testid={`external-link-${link.id}`}
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{link.title}</p>
+                    {link.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-1">{link.description}</p>
+                    )}
+                  </div>
+                  <ExternalLinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </a>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {isAdmin && unreadNotifications.length > 0 && (
+        <Card className="border-yellow-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+              <Bell className="h-5 w-5" />
+              Notifications ({unreadNotifications.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {unreadNotifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800"
+                  data-testid={`notification-${notif.id}`}
+                >
+                  <p className="font-medium text-sm text-yellow-900 dark:text-yellow-100">
+                    {notif.title}
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    {notif.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-2">
