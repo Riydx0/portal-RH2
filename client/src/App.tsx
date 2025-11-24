@@ -26,6 +26,8 @@ import SSOSettingsPage from "@/pages/sso-settings-page";
 import ChangePasswordPage from "@/pages/change-password-page";
 import ForgotPasswordPage from "@/pages/forgot-password-page";
 import GroupsPage from "@/pages/groups-page";
+import LanguageSettingsPage from "@/pages/language-settings-page";
+import { initLanguage } from "@/lib/i18n";
 
 function Router() {
   return (
@@ -46,6 +48,7 @@ function Router() {
       <ProtectedRoute path="/settings/appearance" component={AppearanceSettingsPage} />
       <ProtectedRoute path="/settings/branding" component={BrandingSettingsPage} />
       <ProtectedRoute path="/settings/sso" component={SSOSettingsPage} />
+      <ProtectedRoute path="/settings/language" component={LanguageSettingsPage} />
       <ProtectedRoute path="/settings/change-password" component={ChangePasswordPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
@@ -57,13 +60,14 @@ function AppContent() {
   const [location] = useLocation();
   const isAuthPage = location === "/auth";
   const isShareDownload = location.startsWith("/download/");
+  const isForgotPassword = location === "/forgot-password";
 
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
 
-  if (isAuthPage || isShareDownload) {
+  if (isAuthPage || isShareDownload || isForgotPassword) {
     return <Router />;
   }
 
@@ -85,6 +89,8 @@ function AppContent() {
 }
 
 function App() {
+  initLanguage();
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

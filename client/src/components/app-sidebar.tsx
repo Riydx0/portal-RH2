@@ -93,12 +93,6 @@ export function AppSidebar() {
       icon: Key,
       show: isAdmin,
     },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
-      show: true,
-    },
   ];
 
   const settingsItems = [
@@ -116,6 +110,11 @@ export function AppSidebar() {
       title: "SSO Settings",
       url: "/settings/sso",
       show: isAdmin,
+    },
+    {
+      title: "Language",
+      url: "/settings/language",
+      show: true,
     },
     {
       title: "Change Password",
@@ -185,35 +184,12 @@ export function AppSidebar() {
                 {adminItems.map((item) =>
                   item.show ? (
                     <SidebarMenuItem key={item.title}>
-                      {item.title === "Settings" && isAdmin ? (
-                        <>
-                          <SidebarMenuButton asChild isActive={location === item.url}>
-                            <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.title}</span>
-                              <ChevronRight className="h-4 w-4 ml-auto" />
-                            </Link>
-                          </SidebarMenuButton>
-                          <SidebarMenuSub>
-                            {settingsItems.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.url}>
-                                <SidebarMenuSubButton asChild isActive={location === subItem.url}>
-                                  <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
-                                    <span>{subItem.title}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </>
-                      ) : (
-                        <SidebarMenuButton asChild isActive={location === item.url}>
-                          <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      )}
+                      <SidebarMenuButton asChild isActive={location === item.url}>
+                        <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   ) : null
                 )}
@@ -221,6 +197,34 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>الحساب / Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/settings" || location.startsWith("/settings/")}>
+                  <Link href="/settings" data-testid="link-settings">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                    <ChevronRight className="h-4 w-4 ml-auto" />
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  {settingsItems.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.url}>
+                      <SidebarMenuSubButton asChild isActive={location === subItem.url}>
+                        <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
+                          <span>{subItem.title}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4">
