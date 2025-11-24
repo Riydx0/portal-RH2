@@ -14,6 +14,9 @@ import {
   insertTicketSchema,
   insertTicketCommentSchema,
   settings,
+  externalLinks,
+  notifications,
+  insertExternalLinkSchema,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -519,6 +522,86 @@ export function registerRoutes(app: Express): Server {
       res.json(result[0]);
     } catch (error: any) {
       res.status(400).send(error.message);
+    }
+  });
+
+  // External Links
+  app.get("/api/external-links", async (req, res) => {
+    try {
+      const links = await db.select().from(externalLinks).orderBy(externalLinks.order);
+      res.json(links);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/external-links", requireAdmin, async (req, res) => {
+    try {
+      const data = insertExternalLinkSchema.parse(req.body);
+      const link = await db.insert(externalLinks).values(data).returning();
+      res.status(201).json(link[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/external-links/:id", requireAdmin, async (req, res) => {
+    try {
+      const data = insertExternalLinkSchema.partial().parse(req.body);
+      const result = await db
+        .update(externalLinks)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(externalLinks.id, parseInt(req.params.id)))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).send("Link not found");
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.delete("/api/external-links/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(externalLinks).where(eq(externalLinks.id, parseInt(req.params.id)));
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Notifications
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifs = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.userId, req.user!.id))
+        .orderBy((n) => n.createdAt);
+      res.json(notifs);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
+    try {
+      const result = await db
+        .update(notifications)
+        .set({ read: true })
+        .where(eq(notifications.id, parseInt(req.params.id)))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).send("Notification not found");
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      res.status(500).send(error.message);
     }
   });
 

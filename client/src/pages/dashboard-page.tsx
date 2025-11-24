@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Key, Ticket, CheckCircle, AlertCircle, FolderTree } from "lucide-react";
+import { HardDrive, Key, Ticket, CheckCircle, AlertCircle, FolderTree, Bell, ExternalLink as ExternalLinkIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Ticket as TicketType } from "@shared/schema";
+import { Ticket as TicketType, ExternalLink, Notification } from "@shared/schema";
 import { Link } from "wouter";
 
 type DashboardStats = {
@@ -31,6 +31,16 @@ export default function DashboardPage() {
   const { data: recentTickets, isLoading: ticketsLoading } = useQuery<RecentTicket[]>({
     queryKey: ["/api/tickets/recent"],
   });
+
+  const { data: externalLinks = [], isLoading: linksLoading } = useQuery<ExternalLink[]>({
+    queryKey: ["/api/external-links"],
+  });
+
+  const { data: notifications = [], isLoading: notificationsLoading } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+  });
+
+  const unreadNotifications = notifications.filter(n => !n.read);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; className: string }> = {
@@ -143,6 +153,67 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {externalLinks && externalLinks.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ExternalLinkIcon className="h-5 w-5" />
+                Quick Links
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2">
+                {externalLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-md border hover-elevate transition-colors bg-muted/50 hover:bg-muted"
+                    data-testid={`external-link-${link.id}`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{link.title}</p>
+                    </div>
+                    <ExternalLinkIcon className="h-4 w-4 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {unreadNotifications.length > 0 && (
+          <Card className="border-yellow-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+                <Bell className="h-5 w-5" />
+                Notifications ({unreadNotifications.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {unreadNotifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800"
+                    data-testid={`notification-${notif.id}`}
+                  >
+                    <p className="font-medium text-sm text-yellow-900 dark:text-yellow-100">
+                      {notif.title}
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      {notif.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
