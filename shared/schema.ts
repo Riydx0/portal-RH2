@@ -135,8 +135,11 @@ export const shareLinks = pgTable("share_links", {
   softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
   secretCode: text("secret_code").notNull().unique(),
   createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  password: text("password"), // Optional password protection
+  note: text("note"), // Optional note to recipient
+  permissions: text("permissions").notNull().default("read"), // read, download
   expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const groups = pgTable("groups", {

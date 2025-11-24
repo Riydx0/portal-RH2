@@ -638,9 +638,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Share Links
-  app.post("/api/share-links", requireAdmin, async (req, res) => {
+  app.post("/api/share-links", requireAuth, async (req, res) => {
     try {
-      const { softwareId } = req.body;
+      const { softwareId, password, note, expiresAt, permissions } = req.body;
       
       if (!softwareId) {
         return res.status(400).send("Software ID required");
@@ -655,6 +655,10 @@ export function registerRoutes(app: Express): Server {
           softwareId,
           secretCode,
           createdBy: req.user!.id,
+          password: password || null,
+          note: note || null,
+          permissions: permissions || "download",
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
         })
         .returning();
       
@@ -694,7 +698,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/share-download", async (req, res) => {
     try {
-      const { secretCode } = req.body;
+      const { secretCode, password } = req.body;
       
       if (!secretCode) {
         return res.status(400).send("Secret code required");
@@ -709,6 +713,16 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Invalid secret code");
       }
 
+      // Check if expired
+      if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+        return res.status(403).send("This link has expired");
+      }
+
+      // Check if password is required
+      if (link.password && link.password !== password) {
+        return res.status(401).json({ needsPassword: true, message: "Password required" });
+      }
+
       // Get software details
       const [sw] = await db
         .select()
@@ -719,7 +733,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("File not found");
       }
 
-      res.json({ filePath: sw.filePath, name: sw.name });
+      res.json({ 
+        filePath: sw.filePath, 
+        name: sw.name,
+        note: link.note,
+      });
     } catch (error: any) {
       res.status(500).send(error.message);
     }

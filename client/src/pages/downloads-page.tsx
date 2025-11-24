@@ -21,7 +21,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Download, Search, Monitor, Apple, HardDrive, ExternalLink, Share2, Copy, Check } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download, Search, Monitor, Apple, HardDrive, ExternalLink, Share2, Copy, Check, Lock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,10 +36,19 @@ export default function DownloadsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
+  
+  // Share dialog states
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [shareData, setShareData] = useState<any>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
   const [selectedSoftwareForShare, setSelectedSoftwareForShare] = useState<SoftwareWithCategory | null>(null);
+  const [shareFormData, setShareFormData] = useState({
+    password: "",
+    note: "",
+    expiresAt: "",
+    withPassword: false,
+    withExpiration: false,
+  });
+  const [shareResult, setShareResult] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const { data: software, isLoading } = useQuery<SoftwareWithCategory[]>({
     queryKey: ["/api/software"],
@@ -48,20 +59,20 @@ export default function DownloadsPage() {
   });
 
   const shareMutation = useMutation({
-    mutationFn: async (softwareId: number) => {
+    mutationFn: async (payload: any) => {
       const response = await fetch("/api/share-links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ softwareId }),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed to create share link");
       return response.json();
     },
     onSuccess: (data) => {
-      setShareData(data);
+      setShareResult(data);
       toast({
-        title: "Share link created!",
-        description: "Copy the secret code to share with others",
+        title: "Public link created!",
+        description: "Share the code or link with others",
       });
     },
     onError: (error: any) => {
@@ -73,7 +84,7 @@ export default function DownloadsPage() {
     },
   });
 
-  const handleShare = (sw: SoftwareWithCategory) => {
+  const handleShareClick = (sw: SoftwareWithCategory) => {
     if (!sw.filePath) {
       toast({
         title: "Error",
@@ -83,22 +94,35 @@ export default function DownloadsPage() {
       return;
     }
     setSelectedSoftwareForShare(sw);
-    setShareData(null);
+    setShareFormData({
+      password: "",
+      note: "",
+      expiresAt: "",
+      withPassword: false,
+      withExpiration: false,
+    });
+    setShareResult(null);
     setCopiedCode(false);
     setIsShareOpen(true);
-    shareMutation.mutate(sw.id);
   };
 
-  const copyToClipboard = () => {
-    if (shareData?.secretCode) {
-      navigator.clipboard.writeText(shareData.secretCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-      toast({
-        title: "Copied!",
-        description: "Secret code copied to clipboard",
-      });
-    }
+  const handleCreatePublicLink = () => {
+    if (!selectedSoftwareForShare) return;
+
+    shareMutation.mutate({
+      softwareId: selectedSoftwareForShare.id,
+      password: shareFormData.withPassword ? shareFormData.password : null,
+      note: shareFormData.note || null,
+      expiresAt: shareFormData.withExpiration ? shareFormData.expiresAt : null,
+      permissions: "download",
+    });
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+    toast({ title: "Copied!" });
   };
 
   const activeSoftware = software?.filter((sw) => sw.isActive);
@@ -252,9 +276,9 @@ export default function DownloadsPage() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => handleShare(sw)}
+                                onClick={() => handleShareClick(sw)}
                                 data-testid={`button-share-${sw.id}`}
-                                title="Create shareable link with secret code"
+                                title="Create public link"
                               >
                                 <Share2 className="h-4 w-4" />
                               </Button>
@@ -281,72 +305,166 @@ export default function DownloadsPage() {
         </CardContent>
       </Card>
 
-      {/* Share Dialog */}
+      {/* Create Public Link Dialog */}
       <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Share Software</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Create Public Link
+            </DialogTitle>
             <DialogDescription>
-              {selectedSoftwareForShare?.name} - Create a secret code to share
+              {selectedSoftwareForShare?.name}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            {shareMutation.isPending && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Creating share link...</p>
-              </div>
-            )}
-            {shareData && (
-              <div className="space-y-4 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                <div>
-                  <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">Secret Code</p>
-                  <div className="flex gap-2">
-                    <code className="flex-1 p-3 bg-white dark:bg-black rounded border font-mono text-lg tracking-widest text-center">
-                      {shareData.secretCode}
-                    </code>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={copyToClipboard}
-                      data-testid="button-copy-code"
-                    >
-                      {copiedCode ? (
-                        <Check className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+
+          {!shareResult ? (
+            <div className="space-y-4">
+              {/* Password Protection */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="with-password"
+                    checked={shareFormData.withPassword}
+                    onCheckedChange={(checked) =>
+                      setShareFormData({ ...shareFormData, withPassword: checked as boolean })
+                    }
+                    data-testid="checkbox-password"
+                  />
+                  <Label htmlFor="with-password" className="cursor-pointer">Set password</Label>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">Share Link</p>
-                  <div className="flex gap-2">
-                    <code className="flex-1 p-3 bg-white dark:bg-black rounded border text-xs break-all">
-                      {`${window.location.origin}/download/${shareData.secretCode}`}
-                    </code>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/download/${shareData.secretCode}`);
-                        toast({ title: "Link copied!" });
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-green-700 dark:text-green-300">
-                  Share the code or link with others to let them download this software
-                </p>
+                {shareFormData.withPassword && (
+                  <Input
+                    type="password"
+                    placeholder="Enter password..."
+                    value={shareFormData.password}
+                    onChange={(e) =>
+                      setShareFormData({ ...shareFormData, password: e.target.value })
+                    }
+                    data-testid="input-share-password"
+                  />
+                )}
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsShareOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
+
+              {/* Note to Recipient */}
+              <div className="space-y-2">
+                <Label htmlFor="note">Note to recipient (optional)</Label>
+                <Input
+                  id="note"
+                  placeholder="Add a message..."
+                  value={shareFormData.note}
+                  onChange={(e) =>
+                    setShareFormData({ ...shareFormData, note: e.target.value })
+                  }
+                  data-testid="input-share-note"
+                />
+              </div>
+
+              {/* Expiration Date */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="with-expiration"
+                    checked={shareFormData.withExpiration}
+                    onCheckedChange={(checked) =>
+                      setShareFormData({ ...shareFormData, withExpiration: checked as boolean })
+                    }
+                    data-testid="checkbox-expiration"
+                  />
+                  <Label htmlFor="with-expiration" className="cursor-pointer">Set expiration date</Label>
+                </div>
+                {shareFormData.withExpiration && (
+                  <Input
+                    type="datetime-local"
+                    value={shareFormData.expiresAt}
+                    onChange={(e) =>
+                      setShareFormData({ ...shareFormData, expiresAt: e.target.value })
+                    }
+                    data-testid="input-share-expires"
+                  />
+                )}
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsShareOpen(false)}
+                  data-testid="button-cancel-share"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreatePublicLink}
+                  disabled={shareMutation.isPending || (shareFormData.withPassword && !shareFormData.password)}
+                  data-testid="button-create-link"
+                >
+                  {shareMutation.isPending ? "Creating..." : "Create Link"}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Secret Code */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Secret Code</Label>
+                <div className="flex gap-2">
+                  <code className="flex-1 p-3 bg-muted rounded border font-mono text-center tracking-widest">
+                    {shareResult.secretCode}
+                  </code>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => copyToClipboard(shareResult.secretCode)}
+                    data-testid="button-copy-secret"
+                  >
+                    {copiedCode ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Share Link */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Share Link</Label>
+                <div className="flex gap-2">
+                  <code className="flex-1 p-3 bg-muted rounded border text-xs break-all">
+                    {`${window.location.origin}/download/${shareResult.secretCode}`}
+                  </code>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() =>
+                      copyToClipboard(`${window.location.origin}/download/${shareResult.secretCode}`)
+                    }
+                    data-testid="button-copy-link"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Info */}
+              {shareFormData.withPassword && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    🔐 Password protected - recipient must enter the password to download
+                  </p>
+                </div>
+              )}
+              {shareFormData.withExpiration && (
+                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    ⏰ Expires on {new Date(shareFormData.expiresAt).toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button onClick={() => setIsShareOpen(false)} data-testid="button-done-share">
+                  Done
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

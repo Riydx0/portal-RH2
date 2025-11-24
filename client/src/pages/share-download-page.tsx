@@ -11,6 +11,9 @@ export default function ShareDownloadPage() {
   const { toast } = useToast();
   const [match, params] = useRoute("/download/:secretCode");
   const [secretCode, setSecretCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [noteText, setNoteText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
 
@@ -38,17 +41,38 @@ export default function ShareDownloadPage() {
       const response = await fetch("/api/share-download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ secretCode: secretCode.trim() }),
+        body: JSON.stringify({ 
+          secretCode: secretCode.trim(),
+          password: password || undefined,
+        }),
       });
+
+      if (response.status === 401) {
+        const data = await response.json();
+        if (data.needsPassword) {
+          setNeedsPassword(true);
+          setIsLoading(false);
+          return;
+        }
+        throw new Error("Invalid password");
+      }
 
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Invalid or expired secret code");
         }
+        if (response.status === 403) {
+          const text = await response.text();
+          throw new Error(text);
+        }
         throw new Error("Download failed");
       }
 
       const data = await response.json();
+      
+      if (data.note) {
+        setNoteText(data.note);
+      }
       
       // Trigger download
       const link = document.createElement("a");
@@ -62,6 +86,10 @@ export default function ShareDownloadPage() {
         title: "Success",
         description: "Download started!",
       });
+      
+      // Reset password after successful download
+      setPassword("");
+      setNeedsPassword(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -99,38 +127,88 @@ export default function ShareDownloadPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleDownload} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="secret-code">Secret Code</Label>
-              <Input
-                id="secret-code"
-                type="text"
-                placeholder="Enter the secret code..."
-                value={secretCode}
-                onChange={(e) => setSecretCode(e.target.value)}
-                disabled={isLoading}
-                data-testid="input-secret-code"
-                className="text-center font-mono text-lg tracking-widest"
-                autoComplete="off"
-              />
-            </div>
+            {!needsPassword ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="secret-code">Secret Code</Label>
+                  <Input
+                    id="secret-code"
+                    type="text"
+                    placeholder="Enter the secret code..."
+                    value={secretCode}
+                    onChange={(e) => setSecretCode(e.target.value)}
+                    disabled={isLoading}
+                    data-testid="input-secret-code"
+                    className="text-center font-mono text-lg tracking-widest"
+                    autoComplete="off"
+                  />
+                </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || !secretCode.trim()}
-              data-testid="button-download-submit"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {isLoading ? (isAutoSubmitting ? "Verifying and downloading..." : "Preparing download...") : "Download"}
-            </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !secretCode.trim()}
+                  data-testid="button-download-submit"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isLoading ? (isAutoSubmitting ? "Verifying..." : "Verify & Download") : "Continue"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password Required</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter password..."
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    data-testid="input-password"
+                    autoFocus
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !password.trim()}
+                  data-testid="button-download-with-password"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isLoading ? "Downloading..." : "Download"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setNeedsPassword(false);
+                    setPassword("");
+                  }}
+                  disabled={isLoading}
+                >
+                  Back
+                </Button>
+              </>
+            )}
           </form>
+
+          {noteText && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">Message from sender:</p>
+              <p className="text-sm text-blue-800 dark:text-blue-200">{noteText}</p>
+            </div>
+          )}
 
           <div className="p-4 bg-muted/50 rounded-lg border border-muted-foreground/20">
             <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div className="text-sm text-muted-foreground">
                 <p className="font-medium mb-1">Secure Download</p>
-                <p>This download link is protected with a secret code. Only authorized users can access it.</p>
+                <p>This link is protected and only authorized users can access it.</p>
               </div>
             </div>
           </div>
