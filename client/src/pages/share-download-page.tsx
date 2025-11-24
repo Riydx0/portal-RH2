@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Download, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRoute } from "wouter";
 
 export default function ShareDownloadPage() {
   const { toast } = useToast();
+  const [match, params] = useRoute("/download/:secretCode");
   const [secretCode, setSecretCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (params?.secretCode) {
+      setSecretCode(params.secretCode);
+      setIsAutoSubmitting(true);
+    }
+  }, [params?.secretCode]);
 
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +33,7 @@ export default function ShareDownloadPage() {
     }
 
     setIsLoading(true);
+    setIsAutoSubmitting(false);
     try {
       const response = await fetch("/api/share-download", {
         method: "POST",
@@ -62,6 +73,18 @@ export default function ShareDownloadPage() {
     }
   };
 
+  useEffect(() => {
+    if (isAutoSubmitting && secretCode) {
+      const timer = setTimeout(() => {
+        const form = document.querySelector("form") as HTMLFormElement;
+        if (form) {
+          form.dispatchEvent(new Event("submit", { bubbles: true }));
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAutoSubmitting, secretCode]);
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-secondary/20">
       <Card className="w-full max-w-md">
@@ -80,13 +103,14 @@ export default function ShareDownloadPage() {
               <Label htmlFor="secret-code">Secret Code</Label>
               <Input
                 id="secret-code"
-                type="password"
+                type="text"
                 placeholder="Enter the secret code..."
                 value={secretCode}
                 onChange={(e) => setSecretCode(e.target.value)}
                 disabled={isLoading}
                 data-testid="input-secret-code"
                 className="text-center font-mono text-lg tracking-widest"
+                autoComplete="off"
               />
             </div>
 
@@ -97,7 +121,7 @@ export default function ShareDownloadPage() {
               data-testid="button-download-submit"
             >
               <Download className="mr-2 h-4 w-4" />
-              {isLoading ? "Preparing download..." : "Download"}
+              {isLoading ? (isAutoSubmitting ? "Verifying and downloading..." : "Preparing download...") : "Download"}
             </Button>
           </form>
 
