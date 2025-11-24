@@ -239,24 +239,15 @@ export function AppSidebar() {
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
-                    {adminSettingsItems.length > 0 && (
-                      <>
-                        <SidebarMenuSubItem>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Admin Settings
-                          </div>
-                        </SidebarMenuSubItem>
-                        {adminSettingsItems.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.url}>
-                            <SidebarMenuSubButton asChild isActive={location === subItem.url}>
-                              <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </>
-                    )}
+                    {adminSettingsItems.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.url}>
+                        <SidebarMenuSubButton asChild isActive={location === subItem.url}>
+                          <Link href={subItem.url} data-testid={`link-${subItem.title.toLowerCase()}`}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
