@@ -38,11 +38,13 @@ import VpnPage from "@/pages/vpn-page";
 import FirewallPage from "@/pages/firewall-page";
 import InvoicesPage from "@/pages/invoices-page";
 import SoftwarePricingPage from "@/pages/software-pricing-page";
+import PricingPage from "@/pages/pricing-page";
 
 function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/pricing" component={PricingPage} />
       <Route path="/download/:secretCode" component={ShareDownloadPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/users" component={UsersPage} />

@@ -39,6 +39,11 @@ const translations = {
     pricing: 'Pricing',
     softwarePricing: 'Software Pricing',
     billing: 'Billing',
+    pricingPlans: 'Pricing Plans',
+    choosePlan: 'Choose your plan',
+    getStarted: 'Get Started',
+    upgradePlan: 'Upgrade Plan',
+    contactSales: 'Contact Sales',
 
     // Auth Page
     usernameOrEmail: 'Username or Email',
@@ -185,6 +190,11 @@ const translations = {
     pricing: 'التسعير',
     softwarePricing: 'تسعير البرامج',
     billing: 'الفواتير',
+    pricingPlans: 'خطط التسعير',
+    choosePlan: 'اختر خطتك',
+    getStarted: 'ابدأ الآن',
+    upgradePlan: 'ترقية الآن',
+    contactSales: 'اتصل بالمبيعات',
 
     // Auth Page
     usernameOrEmail: 'اسم المستخدم أو البريد الإلكتروني',

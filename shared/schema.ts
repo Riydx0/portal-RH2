@@ -11,6 +11,8 @@ export const platformEnum = pgEnum("platform", ["Windows", "Mac", "Both"]);
 export const networkStatusEnum = pgEnum("network_status", ["active", "inactive", "maintenance", "error"]);
 export const firewallStatusEnum = pgEnum("firewall_status", ["enabled", "disabled", "monitoring"]);
 export const invoiceStatusEnum = pgEnum("invoice_status", ["draft", "sent", "paid", "overdue", "cancelled"]);
+export const planEnum = pgEnum("plan", ["basic", "standard", "professional"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "canceled", "expired", "paused"]);
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -219,6 +221,34 @@ export const invoices = pgTable("invoices", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull().unique(), // basic, standard, professional
+  plan: planEnum("plan").notNull(),
+  price: integer("price").notNull(), // في سنتات شهريا
+  maxUsers: integer("max_users"),
+  maxSoftware: integer("max_software"),
+  maxStorage: integer("max_storage"), // بـ MB
+  features: text("features").array(), // JSON array
+  stripePriceId: text("stripe_price_id"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: integer("plan_id").notNull().references(() => subscriptionPlans.id),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  canceledAt: timestamp("canceled_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Schemas & Types
 export const insertNetworkSchema = createInsertSchema(networks).omit({
   id: true,
@@ -255,6 +285,24 @@ export type InsertSoftwarePricing = z.infer<typeof insertSoftwarePricingSchema>;
 
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
 export const usersRelations = relations(users, ({ many }) => ({
   createdTickets: many(tickets, { relationName: "createdBy" }),
