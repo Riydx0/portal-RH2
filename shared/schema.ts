@@ -1,18 +1,58 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  integer,
+  boolean,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "client"]);
-export const ticketStatusEnum = pgEnum("ticket_status", ["open", "in-progress", "closed"]);
-export const ticketPriorityEnum = pgEnum("ticket_priority", ["low", "normal", "high"]);
-export const licenseStatusEnum = pgEnum("license_status", ["available", "in-use", "expired"]);
+export const ticketStatusEnum = pgEnum("ticket_status", [
+  "open",
+  "in-progress",
+  "closed",
+]);
+export const ticketPriorityEnum = pgEnum("ticket_priority", [
+  "low",
+  "normal",
+  "high",
+]);
+export const licenseStatusEnum = pgEnum("license_status", [
+  "available",
+  "in-use",
+  "expired",
+]);
 export const platformEnum = pgEnum("platform", ["Windows", "Mac", "Both"]);
-export const networkStatusEnum = pgEnum("network_status", ["active", "inactive", "maintenance", "error"]);
-export const firewallStatusEnum = pgEnum("firewall_status", ["enabled", "disabled", "monitoring"]);
-export const invoiceStatusEnum = pgEnum("invoice_status", ["draft", "sent", "paid", "overdue", "cancelled"]);
+export const networkStatusEnum = pgEnum("network_status", [
+  "active",
+  "inactive",
+  "maintenance",
+  "error",
+]);
+export const firewallStatusEnum = pgEnum("firewall_status", [
+  "enabled",
+  "disabled",
+  "monitoring",
+]);
+export const invoiceStatusEnum = pgEnum("invoice_status", [
+  "draft",
+  "sent",
+  "paid",
+  "overdue",
+  "cancelled",
+]);
 export const planEnum = pgEnum("plan", ["basic", "standard", "professional"]);
-export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "canceled", "expired", "paused"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "canceled",
+  "expired",
+  "paused",
+]);
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -35,7 +75,9 @@ export const categories = pgTable("categories", {
 export const software = pgTable("software", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
-  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
   description: text("description"),
   downloadUrl: text("download_url"),
   filePath: text("file_path"),
@@ -49,7 +91,9 @@ export const software = pgTable("software", {
 
 export const licenses = pgTable("licenses", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
+  softwareId: integer("software_id")
+    .notNull()
+    .references(() => software.id, { onDelete: "cascade" }),
   licenseKey: text("license_key").notNull(),
   assignedTo: text("assigned_to"),
   notes: text("notes"),
@@ -64,16 +108,24 @@ export const tickets = pgTable("tickets", {
   description: text("description").notNull(),
   status: ticketStatusEnum("status").notNull().default("open"),
   priority: ticketPriorityEnum("priority").notNull().default("normal"),
-  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
-  assignedTo: integer("assigned_to").references(() => users.id, { onDelete: "set null" }),
+  createdBy: integer("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  assignedTo: integer("assigned_to").references(() => users.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const ticketComments = pgTable("ticket_comments", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  ticketId: integer("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  ticketId: integer("ticket_id")
+    .notNull()
+    .references(() => tickets.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -85,7 +137,9 @@ export const clients = pgTable("clients", {
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
-  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -96,7 +150,9 @@ export const devices = pgTable("devices", {
   serialNumber: text("serial_number"),
   model: text("model"),
   manufacturer: text("manufacturer"),
-  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: integer("client_id")
+    .notNull()
+    .references(() => clients.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -121,7 +177,9 @@ export const externalLinks = pgTable("external_links", {
 
 export const notifications = pgTable("notifications", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
   type: text("type").notNull(),
   title: text("title").notNull(),
   message: text("message").notNull(),
@@ -132,9 +190,13 @@ export const notifications = pgTable("notifications", {
 
 export const shareLinks = pgTable("share_links", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
+  softwareId: integer("software_id")
+    .notNull()
+    .references(() => software.id, { onDelete: "cascade" }),
   secretCode: text("secret_code").notNull().unique(),
-  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdBy: integer("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   password: text("password"), // Optional password protection
   note: text("note"), // Optional note to recipient
   permissions: text("permissions").notNull().default("read"), // read, download
@@ -151,8 +213,12 @@ export const groups = pgTable("groups", {
 });
 
 export const userGroups = pgTable("user_groups", {
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  groupId: integer("group_id").notNull().references(() => groups.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => groups.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -200,7 +266,9 @@ export const firewallRules = pgTable("firewall_rules", {
 
 export const softwarePricing = pgTable("software_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  softwareId: integer("software_id").notNull().references(() => software.id, { onDelete: "cascade" }),
+  softwareId: integer("software_id")
+    .notNull()
+    .references(() => software.id, { onDelete: "cascade" }),
   price: integer("price").notNull(), // في سنتات
   currency: text("currency").notNull().default("USD"),
   licenseType: text("license_type"), // annual, perpetual, subscription, etc
@@ -213,7 +281,9 @@ export const softwarePricing = pgTable("software_pricing", {
 export const invoices = pgTable("invoices", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   invoiceNumber: text("invoice_number").notNull().unique(),
-  clientId: integer("client_id").references(() => clients.id, { onDelete: "set null" }),
+  clientId: integer("client_id").references(() => clients.id, {
+    onDelete: "set null",
+  }),
   amount: integer("amount").notNull(), // في سنتات
   currency: text("currency").notNull().default("USD"),
   status: invoiceStatusEnum("status").notNull().default("draft"),
@@ -241,8 +311,12 @@ export const subscriptionPlans = pgTable("subscription_plans", {
 
 export const subscriptions = pgTable("subscriptions", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  planId: integer("plan_id").notNull().references(() => subscriptionPlans.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  planId: integer("plan_id")
+    .notNull()
+    .references(() => subscriptionPlans.id),
   status: subscriptionStatusEnum("status").notNull().default("active"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   currentPeriodStart: timestamp("current_period_start"),
@@ -257,11 +331,15 @@ export const apiKeys = pgTable("api_keys", {
   key: text("key").notNull().unique(),
   secret: text("secret").notNull(),
   name: text("name").notNull(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   isActive: boolean("is_active").notNull().default(true),
   lastUsed: timestamp("last_used"),
   rateLimit: integer("rate_limit").default(1000), // requests per hour
-  permissions: text("permissions").array().default(sql`ARRAY['read', 'write']`), // read, write, admin
+  permissions: text("permissions")
+    .array()
+    .default(sql`ARRAY['read', 'write']`), // read, write, admin
   createdAt: timestamp("created_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at"),
 });
@@ -285,7 +363,9 @@ export const insertFirewallRuleSchema = createInsertSchema(firewallRules).omit({
   updatedAt: true,
 });
 
-export const insertSoftwarePricingSchema = createInsertSchema(softwarePricing).omit({
+export const insertSoftwarePricingSchema = createInsertSchema(
+  softwarePricing,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -303,7 +383,9 @@ export type InsertSoftwarePricing = z.infer<typeof insertSoftwarePricingSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 
-export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+export const insertSubscriptionPlanSchema = createInsertSchema(
+  subscriptionPlans,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -316,7 +398,9 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
 });
 
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
-export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type InsertSubscriptionPlan = z.infer<
+  typeof insertSubscriptionPlanSchema
+>;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
@@ -421,7 +505,9 @@ export const insertTicketSchema = createInsertSchema(tickets).omit({
 export type InsertTicket = z.infer<typeof insertTicketSchema>;
 
 export type TicketComment = typeof ticketComments.$inferSelect;
-export const insertTicketCommentSchema = createInsertSchema(ticketComments).omit({
+export const insertTicketCommentSchema = createInsertSchema(
+  ticketComments,
+).omit({
   id: true,
   createdAt: true,
 });
