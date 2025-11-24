@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Software, Category } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,17 +13,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Search, Monitor, Apple, HardDrive, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Download, Search, Monitor, Apple, HardDrive, ExternalLink, Share2, Copy, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 type SoftwareWithCategory = Software & {
   category: Category;
 };
 
 export default function DownloadsPage() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareData, setShareData] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [selectedSoftwareForShare, setSelectedSoftwareForShare] = useState<SoftwareWithCategory | null>(null);
 
   const { data: software, isLoading } = useQuery<SoftwareWithCategory[]>({
     queryKey: ["/api/software"],
@@ -32,6 +46,60 @@ export default function DownloadsPage() {
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const shareMutation = useMutation({
+    mutationFn: async (softwareId: number) => {
+      const response = await fetch("/api/share-links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ softwareId }),
+      });
+      if (!response.ok) throw new Error("Failed to create share link");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setShareData(data);
+      toast({
+        title: "Share link created!",
+        description: "Copy the secret code to share with others",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleShare = (sw: SoftwareWithCategory) => {
+    if (!sw.filePath) {
+      toast({
+        title: "Error",
+        description: "Software must have an uploaded file to share",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedSoftwareForShare(sw);
+    setShareData(null);
+    setCopiedCode(false);
+    setIsShareOpen(true);
+    shareMutation.mutate(sw.id);
+  };
+
+  const copyToClipboard = () => {
+    if (shareData?.secretCode) {
+      navigator.clipboard.writeText(shareData.secretCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+      toast({
+        title: "Copied!",
+        description: "Secret code copied to clipboard",
+      });
+    }
+  };
 
   const activeSoftware = software?.filter((sw) => sw.isActive);
 
@@ -158,28 +226,40 @@ export default function DownloadsPage() {
                             </CardDescription>
                           )}
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3">
                           {sw.description && (
                             <p className="text-sm text-muted-foreground line-clamp-3">
                               {sw.description}
                             </p>
                           )}
-                          {sw.downloadUrl ? (
-                            <Button
-                              className="w-full"
-                              onClick={() => window.open(sw.downloadUrl!, "_blank")}
-                              data-testid={`button-download-${sw.id}`}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                              <ExternalLink className="ml-2 h-3 w-3" />
-                            </Button>
-                          ) : (
-                            <Button className="w-full" disabled>
-                              <Download className="mr-2 h-4 w-4" />
-                              No Download Link
-                            </Button>
-                          )}
+                          <div className="flex gap-2">
+                            {sw.downloadUrl ? (
+                              <Button
+                                className="flex-1"
+                                onClick={() => window.open(sw.downloadUrl!, "_blank")}
+                                data-testid={`button-download-${sw.id}`}
+                              >
+                                <Download className="mr-2 h-4 w-4" />
+                                Download
+                              </Button>
+                            ) : (
+                              <Button className="flex-1" disabled>
+                                <Download className="mr-2 h-4 w-4" />
+                                No Link
+                              </Button>
+                            )}
+                            {sw.filePath && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleShare(sw)}
+                                data-testid={`button-share-${sw.id}`}
+                                title="Create shareable link with secret code"
+                              >
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -200,6 +280,75 @@ export default function DownloadsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Share Dialog */}
+      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Software</DialogTitle>
+            <DialogDescription>
+              {selectedSoftwareForShare?.name} - Create a secret code to share
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {shareMutation.isPending && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Creating share link...</p>
+              </div>
+            )}
+            {shareData && (
+              <div className="space-y-4 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                <div>
+                  <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">Secret Code</p>
+                  <div className="flex gap-2">
+                    <code className="flex-1 p-3 bg-white dark:bg-black rounded border font-mono text-lg tracking-widest text-center">
+                      {shareData.secretCode}
+                    </code>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={copyToClipboard}
+                      data-testid="button-copy-code"
+                    >
+                      {copiedCode ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">Share Link</p>
+                  <div className="flex gap-2">
+                    <code className="flex-1 p-3 bg-white dark:bg-black rounded border text-xs break-all">
+                      {`${window.location.origin}/download/${shareData.secretCode}`}
+                    </code>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/download/${shareData.secretCode}`);
+                        toast({ title: "Link copied!" });
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  Share the code or link with others to let them download this software
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsShareOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
