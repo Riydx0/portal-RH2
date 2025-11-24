@@ -15,7 +15,7 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const { lang } = useLanguage();
   const [isRegister, setIsRegister] = useState(false);
-  const [loginData, setLoginData] = useState({ username: "", password: "" });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ name: "", email: "", username: "", password: "" });
 
   useEffect(() => {
@@ -74,15 +74,15 @@ export default function AuthPage() {
           {!isRegister ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-username">{t('usernameOrEmail', lang)}</Label>
+                <Label htmlFor="login-email">{t('email', lang)}</Label>
                 <Input
-                  id="login-username"
-                  type="text"
-                  placeholder={lang === 'ar' ? 'admin أو admin@example.com' : 'admin or admin@example.com'}
-                  value={loginData.username}
-                  onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                  id="login-email"
+                  type="email"
+                  placeholder={lang === 'ar' ? 'admin@example.com' : 'admin@example.com'}
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                   required
-                  data-testid="input-login-username"
+                  data-testid="input-login-email"
                 />
               </div>
               <div className="space-y-2">
