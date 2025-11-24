@@ -37,6 +37,9 @@ import {
   insertSubscriptionSchema,
   insertInvoiceSchema,
   insertSoftwarePricingSchema,
+  software,
+  licenses,
+  tickets,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
