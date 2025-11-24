@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Upload, Save, Eye } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const [loginTitle, setLoginTitle] = useState("");
   const [loginDescription, setLoginDescription] = useState("");
   const [loginBgColor, setLoginBgColor] = useState("");
+  const [enableRegistration, setEnableRegistration] = useState(true);
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
@@ -32,6 +34,7 @@ export default function SettingsPage() {
       setLoginTitle(settings.login_title || "IT Portal");
       setLoginDescription(settings.login_description || "Manage your IT services, software, licenses, and support tickets");
       setLoginBgColor(settings.login_bg_color || "#f5f5f5");
+      setEnableRegistration(settings.enable_registration !== "false");
     }
   }, [settings]);
 
@@ -88,6 +91,7 @@ export default function SettingsPage() {
       await apiRequest("PATCH", "/api/settings/login_title", { value: loginTitle });
       await apiRequest("PATCH", "/api/settings/login_description", { value: loginDescription });
       await apiRequest("PATCH", "/api/settings/login_bg_color", { value: loginBgColor });
+      await apiRequest("PATCH", "/api/settings/enable_registration", { value: enableRegistration ? "true" : "false" });
 
       return true;
     },
@@ -239,6 +243,18 @@ export default function SettingsPage() {
                   data-testid="input-login-bg-color-text"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
+              <Label htmlFor="enable-registration" className="cursor-pointer">
+                Enable User Registration
+              </Label>
+              <Switch
+                id="enable-registration"
+                checked={enableRegistration}
+                onCheckedChange={setEnableRegistration}
+                data-testid="toggle-enable-registration"
+              />
             </div>
           </CardContent>
         </Card>

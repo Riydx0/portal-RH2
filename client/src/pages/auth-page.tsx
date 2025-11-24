@@ -24,6 +24,7 @@ export default function AuthPage() {
   const loginDescription = settings?.login_description || "Manage your IT services, software, licenses, and support tickets";
   const loginBgColor = settings?.login_bg_color || "#f5f5f5";
   const logoUrl = settings?.logo_url || "";
+  const enableRegistration = settings?.enable_registration !== "false";
 
   if (user) {
     return <Redirect to="/" />;
@@ -62,9 +63,11 @@ export default function AuthPage() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className={`grid w-full ${enableRegistration ? "grid-cols-2" : "grid-cols-1"}`}>
                 <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
-                <TabsTrigger value="register" data-testid="tab-register">Register</TabsTrigger>
+                {enableRegistration && (
+                  <TabsTrigger value="register" data-testid="tab-register">Register</TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 mt-4">
