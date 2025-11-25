@@ -47,6 +47,8 @@ import RequestLicensePage from "@/pages/request-license-page";
 import WireGuardPage from "@/pages/wireguard-page";
 import ApiKeysPage from "@/pages/api-keys-page";
 import ApiDocsPage from "@/pages/api-docs-page";
+import ClientsPage from "@/pages/clients-page";
+import DevicesPage from "@/pages/devices-page";
 
 function Router() {
   return (
@@ -86,6 +88,8 @@ function Router() {
       <ProtectedRoute path="/wireguard" component={WireGuardPage} />
       <ProtectedRoute path="/api-keys" component={ApiKeysPage} />
       <Route path="/api-docs" component={ApiDocsPage} />
+      <ProtectedRoute path="/clients" component={ClientsPage} />
+      <ProtectedRoute path="/devices" component={DevicesPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

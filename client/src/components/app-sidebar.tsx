@@ -41,6 +41,7 @@ import {
   DollarSign,
   Mail,
   Code,
+  Smartphone,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -155,6 +156,18 @@ export function AppSidebar() {
       title: t('groups', lang),
       url: "/groups",
       icon: Shield,
+      show: isAdmin,
+    },
+    {
+      title: "Clients",
+      url: "/clients",
+      icon: Users,
+      show: isAdmin,
+    },
+    {
+      title: "Devices",
+      url: "/devices",
+      icon: Smartphone,
       show: isAdmin,
     },
   ];
