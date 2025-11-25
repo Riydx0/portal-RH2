@@ -21,6 +21,25 @@ User wants SaaS model: Software as a Service with subscription tiers
 
 ## Recent Changes (November 25, 2025)
 
+### Client Subscriptions Page
+- **New Feature**: Added `/my-subscriptions` page for clients to view and manage their subscription
+- **Functionality**:
+  - Display current subscription details (plan name, status, price, period dates)
+  - Show plan features with checkmarks
+  - Option to upgrade to different plans
+  - Option to cancel subscription
+  - Suggestions for other available plans if no subscription exists
+- **Bilingual Support**: Full Arabic/English support with RTL layout
+- **API Integration**: Uses existing `/api/subscriptions/me` endpoint for subscription data
+- **UI Components**: Card-based layout with status badges and feature lists
+
+### Integration Points:
+- New sidebar menu item: "My Subscription" with CreditCard icon (for all authenticated users)
+- Linked from pricing page for easy access
+- Accessible from main menu for quick navigation
+
+## Recent Changes (November 25, 2025)
+
 ### Clients & Devices Management
 - **Database Schema Updates**:
   - Created `clients` table for managing client accounts (name, company, email, phone, address, userId)

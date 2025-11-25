@@ -42,6 +42,7 @@ import {
   Mail,
   Code,
   Smartphone,
+  CreditCard,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export function AppSidebar() {
   const [financeOpen, setFinanceOpen] = useState(false);
 
   const isAdmin = user?.role === "admin";
+  const isArabic = lang === "ar";
 
   const menuItems = [
     {
@@ -85,6 +87,12 @@ export function AppSidebar() {
       title: "Request License",
       url: "/request-license",
       icon: Key,
+      show: true,
+    },
+    {
+      title: isArabic ? "اشتراكي" : "My Subscription",
+      url: "/my-subscriptions",
+      icon: CreditCard,
       show: true,
     },
   ];

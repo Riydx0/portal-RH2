@@ -49,6 +49,7 @@ import ApiKeysPage from "@/pages/api-keys-page";
 import ApiDocsPage from "@/pages/api-docs-page";
 import ClientsPage from "@/pages/clients-page";
 import DevicesPage from "@/pages/devices-page";
+import MySubscriptionsPage from "@/pages/my-subscriptions-page";
 
 function Router() {
   return (
@@ -90,6 +91,7 @@ function Router() {
       <Route path="/api-docs" component={ApiDocsPage} />
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/devices" component={DevicesPage} />
+      <ProtectedRoute path="/my-subscriptions" component={MySubscriptionsPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>

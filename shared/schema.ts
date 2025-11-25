@@ -480,6 +480,17 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
   }),
 }));
 
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [subscriptions.planId],
+    references: [subscriptionPlans.id],
+  }),
+}));
+
 // Types
 export type Network = typeof networks.$inferSelect;
 export type InsertNetwork = z.infer<typeof insertNetworkSchema>;
