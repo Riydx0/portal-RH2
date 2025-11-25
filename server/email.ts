@@ -31,13 +31,17 @@ async function getTransporter() {
     const secure = (settingsResults[4][0]?.value || process.env.SMTP_SECURE || "false") === "true";
     const from = settingsResults[5][0]?.value || process.env.SMTP_FROM || "noreply@example.com";
 
-    cachedTransporter = nodemailer.createTransport({
+    const transportConfig: any = {
       host,
       port,
       secure,
-      auth: user ? { user, pass } : undefined,
-      from,
-    });
+    };
+
+    if (user && pass) {
+      transportConfig.auth = { user, pass };
+    }
+
+    cachedTransporter = nodemailer.createTransport(transportConfig);
 
     lastCacheTime = now;
     return cachedTransporter;
@@ -78,7 +82,9 @@ export async function sendSubscriptionEmail(
   `;
 
   const transporter = await getTransporter();
+  const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
   return transporter.sendMail({
+    from: smtpFrom,
     to: email,
     subject: `Welcome to ${planName} Plan`,
     html: htmlContent,
@@ -107,7 +113,9 @@ export async function sendInvoiceEmail(
   `;
 
   const transporter = await getTransporter();
+  const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
   return transporter.sendMail({
+    from: smtpFrom,
     to: email,
     subject: `Invoice #${invoiceNumber}`,
     html: htmlContent,
@@ -135,7 +143,9 @@ export async function sendWelcomeEmail(
   `;
 
   const transporter = await getTransporter();
+  const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
   return transporter.sendMail({
+    from: smtpFrom,
     to: email,
     subject: "Welcome to Our Platform",
     html: htmlContent,
