@@ -1,14 +1,61 @@
 import nodemailer from "nodemailer";
+import { db } from "./db.js";
+import { settings as settingsTable } from "@shared/schema.js";
+import { eq } from "drizzle-orm";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "localhost",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: process.env.SMTP_USER && {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+let cachedTransporter: any = null;
+let lastCacheTime = 0;
+
+async function getTransporter() {
+  const now = Date.now();
+  // Refresh cache every 5 minutes
+  if (cachedTransporter && (now - lastCacheTime) < 5 * 60 * 1000) {
+    return cachedTransporter;
+  }
+
+  try {
+    // Try to load settings from database first
+    const settingsResults = await Promise.all([
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_HOST")).limit(1),
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_PORT")).limit(1),
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_USER")).limit(1),
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_PASSWORD")).limit(1),
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_SECURE")).limit(1),
+      db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_FROM")).limit(1),
+    ]);
+
+    const host = settingsResults[0][0]?.value || process.env.SMTP_HOST || "localhost";
+    const port = parseInt(settingsResults[1][0]?.value || process.env.SMTP_PORT || "587");
+    const user = settingsResults[2][0]?.value || process.env.SMTP_USER;
+    const pass = settingsResults[3][0]?.value || process.env.SMTP_PASSWORD;
+    const secure = (settingsResults[4][0]?.value || process.env.SMTP_SECURE || "false") === "true";
+    const from = settingsResults[5][0]?.value || process.env.SMTP_FROM || "noreply@example.com";
+
+    cachedTransporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: user ? { user, pass } : undefined,
+      from,
+    });
+
+    lastCacheTime = now;
+    return cachedTransporter;
+  } catch (error) {
+    // Fallback to environment variables if database fails
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "localhost",
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      } : undefined,
+    });
+    lastCacheTime = now;
+    return cachedTransporter;
+  }
+}
 
 export async function sendSubscriptionEmail(
   email: string,
@@ -30,8 +77,8 @@ export async function sendSubscriptionEmail(
     </div>
   `;
 
+  const transporter = await getTransporter();
   return transporter.sendMail({
-    from: process.env.SMTP_FROM || "noreply@example.com",
     to: email,
     subject: `Welcome to ${planName} Plan`,
     html: htmlContent,
@@ -59,8 +106,8 @@ export async function sendInvoiceEmail(
     </div>
   `;
 
+  const transporter = await getTransporter();
   return transporter.sendMail({
-    from: process.env.SMTP_FROM || "noreply@example.com",
     to: email,
     subject: `Invoice #${invoiceNumber}`,
     html: htmlContent,
@@ -87,8 +134,8 @@ export async function sendWelcomeEmail(
     </div>
   `;
 
+  const transporter = await getTransporter();
   return transporter.sendMail({
-    from: process.env.SMTP_FROM || "noreply@example.com",
     to: email,
     subject: "Welcome to Our Platform",
     html: htmlContent,

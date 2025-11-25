@@ -2,9 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/lib/i18n";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Mail, Check, AlertCircle } from "lucide-react";
 
 export default function EmailSettingsPage() {
@@ -20,12 +21,77 @@ export default function EmailSettingsPage() {
   });
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Load settings from database on mount
+  const { data: allSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
+  useEffect(() => {
+    if (allSettings) {
+      setSettings({
+        smtpHost: allSettings?.SMTP_HOST || "",
+        smtpPort: allSettings?.SMTP_PORT || "587",
+        smtpUser: allSettings?.SMTP_USER || "",
+        smtpPassword: allSettings?.SMTP_PASSWORD || "",
+        smtpFrom: allSettings?.SMTP_FROM || "noreply@example.com",
+        smtpSecure: (allSettings?.SMTP_SECURE || "false") === "true",
+      });
+    }
+  }, [allSettings]);
 
   const handleChange = (field: string, value: any) => {
     setSettings({ ...settings, [field]: value });
   };
 
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    try {
+      // Save all settings
+      const updates = [
+        { key: "SMTP_HOST", value: settings.smtpHost },
+        { key: "SMTP_PORT", value: settings.smtpPort },
+        { key: "SMTP_USER", value: settings.smtpUser },
+        { key: "SMTP_PASSWORD", value: settings.smtpPassword },
+        { key: "SMTP_FROM", value: settings.smtpFrom },
+        { key: "SMTP_SECURE", value: settings.smtpSecure ? "true" : "false" },
+      ];
+
+      await Promise.all(
+        updates.map((update) =>
+          apiRequest("PATCH", `/api/settings/${update.key}`, { value: update.value })
+        )
+      );
+
+      // Invalidate cache to reload settings
+      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+
+      toast({
+        title: "Success",
+        description: "Email settings saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save email settings",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleTestEmail = async () => {
+    if (!settings.smtpHost) {
+      toast({
+        title: "Error",
+        description: "Please configure SMTP settings first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setTesting(true);
     try {
       await apiRequest("POST", "/api/settings/test-email", { testEmail });
@@ -144,18 +210,31 @@ export default function EmailSettingsPage() {
             </label>
           </div>
 
-          <div className="pt-4 border-t">
-            <h3 className="font-semibold mb-3">Test Email</h3>
+          <div className="pt-4 border-t space-y-4">
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="flex-1"
+                data-testid="button-save-email-settings"
+              >
+                {saving ? "Saving..." : "Save Configuration"}
+              </Button>
+            </div>
+
+            <h3 className="font-semibold">Test Email</h3>
             <div className="flex gap-2">
               <Input
                 placeholder="test@example.com"
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
+                data-testid="input-test-email"
               />
               <Button
                 onClick={handleTestEmail}
-                disabled={testing}
+                disabled={testing || saving}
                 variant="outline"
+                data-testid="button-send-test-email"
               >
                 {testing ? "Sending..." : "Send Test"}
               </Button>
