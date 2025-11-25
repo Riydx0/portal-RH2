@@ -24,12 +24,12 @@ async function getTransporter() {
       db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_FROM")).limit(1),
     ]);
 
-    const host = settingsResults[0][0]?.value || process.env.SMTP_HOST || "localhost";
-    const port = parseInt(settingsResults[1][0]?.value || process.env.SMTP_PORT || "587");
-    const user = settingsResults[2][0]?.value || process.env.SMTP_USER;
-    const pass = settingsResults[3][0]?.value || process.env.SMTP_PASSWORD;
-    const secure = (settingsResults[4][0]?.value || process.env.SMTP_SECURE || "false") === "true";
-    const from = settingsResults[5][0]?.value || process.env.SMTP_FROM || "noreply@example.com";
+    const host = (settingsResults[0][0]?.value || process.env.SMTP_HOST || "localhost").trim();
+    const port = parseInt((settingsResults[1][0]?.value || process.env.SMTP_PORT || "587").trim());
+    const user = (settingsResults[2][0]?.value || process.env.SMTP_USER || "").trim();
+    const pass = (settingsResults[3][0]?.value || process.env.SMTP_PASSWORD || "").trim();
+    const secure = ((settingsResults[4][0]?.value || process.env.SMTP_SECURE || "false").trim()) === "true";
+    const from = (settingsResults[5][0]?.value || process.env.SMTP_FROM || "noreply@example.com").trim();
 
     const transportConfig: any = {
       host,

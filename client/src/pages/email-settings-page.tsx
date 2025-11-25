@@ -60,7 +60,9 @@ export default function EmailSettingsPage() {
 
       await Promise.all(
         updates.map((update) =>
-          apiRequest("PATCH", `/api/settings/${update.key}`, { value: update.value })
+          apiRequest("PATCH", `/api/settings/${update.key}`, { 
+            value: typeof update.value === 'string' ? update.value.trim() : update.value 
+          })
         )
       );
 
