@@ -19,6 +19,41 @@ The portal enables organizations to:
 Preferred communication style: Simple, everyday language (Arabic preference)
 User wants SaaS model: Software as a Service with subscription tiers
 
+## Recent Changes (November 25, 2025)
+
+### Clients & Devices Management
+- **Database Schema Updates**:
+  - Created `clients` table for managing client accounts (name, company, email, phone, address, userId)
+  - Created `devices` table for managing client devices (deviceName, serialNumber, model, manufacturer, clientId)
+  - Added `device_id` foreign key to `licenses` table to link licenses to specific devices
+  - Established relations: Clients → Devices, Devices → Licenses, Licenses → Devices
+
+- **Storage Layer**:
+  - Implemented CRUD methods for clients: `getAllClients()`, `getClientById()`, `createClient()`, `updateClient()`, `deleteClient()`
+  - Implemented CRUD methods for devices: `getDevicesByClientId()`, `getDeviceById()`, `getAllDevices()`, `createDevice()`, `updateDevice()`, `deleteDevice()`
+
+- **API Endpoints** (admin-only):
+  - `GET /api/clients` - List all clients
+  - `GET /api/clients/:id` - Get client details
+  - `POST /api/clients` - Create new client
+  - `PATCH /api/clients/:id` - Update client
+  - `DELETE /api/clients/:id` - Delete client
+  - `GET /api/devices` - List all devices
+  - `GET /api/devices/client/:clientId` - Get devices by client
+  - `GET /api/devices/:id` - Get device details
+  - `POST /api/devices` - Create new device
+  - `PATCH /api/devices/:id` - Update device
+  - `DELETE /api/devices/:id` - Delete device
+
+- **Frontend Pages**:
+  - `/clients` - Clients management page with add/edit/delete functionality
+  - `/devices` - Devices management page with client selection
+  - Added sidebar navigation items for Clients and Devices (Team Management section)
+
+### Software Sharing Bug Fix (November 24, 2025)
+- Fixed PATCH endpoint for software sharing to properly handle share code creation/deletion
+- Removed file requirement for enabling sharing (can share software without files)
+
 ## Recent Changes (November 24, 2025)
 
 ### Client Features Implementation
