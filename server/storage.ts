@@ -72,6 +72,19 @@ export interface IStorage {
   getCommentsByTicketId(ticketId: number): Promise<TicketComment[]>;
   createTicketComment(comment: InsertTicketComment): Promise<TicketComment>;
 
+  getAllClients(): Promise<Client[]>;
+  getClientById(id: number): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: number, data: Partial<InsertClient>): Promise<Client>;
+  deleteClient(id: number): Promise<void>;
+
+  getDevicesByClientId(clientId: number): Promise<Device[]>;
+  getDeviceById(id: number): Promise<Device | undefined>;
+  getAllDevices(): Promise<Device[]>;
+  createDevice(device: InsertDevice): Promise<Device>;
+  updateDevice(id: number, data: Partial<InsertDevice>): Promise<Device>;
+  deleteDevice(id: number): Promise<void>;
+
   getStats(): Promise<{
     totalSoftware: number;
     totalCategories: number;
@@ -276,6 +289,68 @@ export class DatabaseStorage implements IStorage {
   async createTicketComment(insertComment: InsertTicketComment): Promise<TicketComment> {
     const [comment] = await db.insert(ticketComments).values(insertComment).returning();
     return comment;
+  }
+
+  async getAllClients(): Promise<Client[]> {
+    return await db.select().from(clients).orderBy(clients.name);
+  }
+
+  async getClientById(id: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient).returning();
+    return client;
+  }
+
+  async updateClient(id: number, data: Partial<InsertClient>): Promise<Client> {
+    const [client] = await db
+      .update(clients)
+      .set({ ...data, createdAt: undefined, updatedAt: new Date() } as any)
+      .where(eq(clients.id, id))
+      .returning();
+    return client;
+  }
+
+  async deleteClient(id: number): Promise<void> {
+    await db.delete(clients).where(eq(clients.id, id));
+  }
+
+  async getDevicesByClientId(clientId: number): Promise<Device[]> {
+    return await db
+      .select()
+      .from(devices)
+      .where(eq(devices.clientId, clientId))
+      .orderBy(devices.deviceName);
+  }
+
+  async getDeviceById(id: number): Promise<Device | undefined> {
+    const [device] = await db.select().from(devices).where(eq(devices.id, id));
+    return device || undefined;
+  }
+
+  async getAllDevices(): Promise<Device[]> {
+    return await db.select().from(devices).orderBy(devices.deviceName);
+  }
+
+  async createDevice(insertDevice: InsertDevice): Promise<Device> {
+    const [device] = await db.insert(devices).values(insertDevice).returning();
+    return device;
+  }
+
+  async updateDevice(id: number, data: Partial<InsertDevice>): Promise<Device> {
+    const [device] = await db
+      .update(devices)
+      .set({ ...data, createdAt: undefined, updatedAt: new Date() } as any)
+      .where(eq(devices.id, id))
+      .returning();
+    return device;
+  }
+
+  async deleteDevice(id: number): Promise<void> {
+    await db.delete(devices).where(eq(devices.id, id));
   }
 
   async getStats() {

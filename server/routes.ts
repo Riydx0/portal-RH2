@@ -1630,6 +1630,128 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Clients endpoints
+  app.get("/api/clients", requireAdmin, async (req, res) => {
+    try {
+      const allClients = await storage.getAllClients();
+      res.json(allClients);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      const client = await storage.getClientById(parseInt(req.params.id));
+      if (!client) {
+        return res.status(404).send("Client not found");
+      }
+      res.json(client);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/clients", requireAdmin, async (req, res) => {
+    try {
+      const { name, company, email, phone, address, userId } = req.body;
+      const client = await storage.createClient({
+        name,
+        company,
+        email,
+        phone,
+        address,
+        userId: userId || null,
+      } as any);
+      res.status(201).json(client);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      const client = await storage.updateClient(parseInt(req.params.id), req.body);
+      res.json(client);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.delete("/api/clients/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteClient(parseInt(req.params.id));
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  // Devices endpoints
+  app.get("/api/devices", requireAuth, async (req, res) => {
+    try {
+      const allDevices = await storage.getAllDevices();
+      res.json(allDevices);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/devices/client/:clientId", requireAdmin, async (req, res) => {
+    try {
+      const devices = await storage.getDevicesByClientId(parseInt(req.params.clientId));
+      res.json(devices);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.get("/api/devices/:id", requireAuth, async (req, res) => {
+    try {
+      const device = await storage.getDeviceById(parseInt(req.params.id));
+      if (!device) {
+        return res.status(404).send("Device not found");
+      }
+      res.json(device);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.post("/api/devices", requireAdmin, async (req, res) => {
+    try {
+      const { deviceName, serialNumber, model, manufacturer, clientId } = req.body;
+      const device = await storage.createDevice({
+        deviceName,
+        serialNumber,
+        model,
+        manufacturer,
+        clientId,
+      } as any);
+      res.status(201).json(device);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  });
+
+  app.patch("/api/devices/:id", requireAdmin, async (req, res) => {
+    try {
+      const device = await storage.updateDevice(parseInt(req.params.id), req.body);
+      res.json(device);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
+  app.delete("/api/devices/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteDevice(parseInt(req.params.id));
+      res.sendStatus(204);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

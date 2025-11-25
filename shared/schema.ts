@@ -96,6 +96,9 @@ export const licenses = pgTable("licenses", {
   softwareId: integer("software_id")
     .notNull()
     .references(() => software.id, { onDelete: "cascade" }),
+  deviceId: integer("device_id").references(() => devices.id, {
+    onDelete: "set null",
+  }),
   licenseKey: text("license_key").notNull(),
   assignedTo: text("assigned_to"),
   notes: text("notes"),
@@ -425,10 +428,30 @@ export const softwareRelations = relations(software, ({ one, many }) => ({
   licenses: many(licenses),
 }));
 
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  user: one(users, {
+    fields: [clients.userId],
+    references: [users.id],
+  }),
+  devices: many(devices),
+}));
+
+export const devicesRelations = relations(devices, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [devices.clientId],
+    references: [clients.id],
+  }),
+  licenses: many(licenses),
+}));
+
 export const licensesRelations = relations(licenses, ({ one }) => ({
   software: one(software, {
     fields: [licenses.softwareId],
     references: [software.id],
+  }),
+  device: one(devices, {
+    fields: [licenses.deviceId],
+    references: [devices.id],
   }),
 }));
 
