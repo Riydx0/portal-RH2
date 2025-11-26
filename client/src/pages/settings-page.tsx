@@ -12,7 +12,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Settings as SettingsIcon, Upload, Save, Eye } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Settings as SettingsIcon, Upload, Save, Eye, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,9 +49,49 @@ export default function SettingsPage() {
   const [cloudronName, setCloudronName] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [updateToken, setUpdateToken] = useState("");
 
   const { data: settings, isLoading } = useQuery<SettingsData>({
     queryKey: ["/api/settings"],
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const token = await apiRequest("GET", "/api/admin/update-token", null) as { token: string };
+      setUpdateToken(token.token);
+      return token;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmUpdateMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/update", { confirmationToken: updateToken });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Update initiated. Server will restart shortly.",
+      });
+      setShowUpdateDialog(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   useEffect(() => {

@@ -1813,6 +1813,52 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update endpoint for manual server updates (admin only)
+  app.post("/api/admin/update", requireAdmin, async (req, res) => {
+    try {
+      const { confirmationToken } = req.body;
+      
+      // Verify confirmation token (simple time-based token)
+      const tokenTimestamp = parseInt(confirmationToken?.split('-')[0] || '0');
+      const currentTime = Date.now();
+      const tokenAge = currentTime - tokenTimestamp;
+      
+      // Token valid for 5 minutes
+      if (tokenAge > 300000 || tokenAge < 0) {
+        return res.status(400).json({ error: "Confirmation token expired" });
+      }
+      
+      console.log("[Update] Server update initiated by admin:", req.user?.email);
+      
+      // In production with Cloudron, trigger update via webhook or signal
+      // For now, log the update request
+      res.json({ 
+        success: true, 
+        message: "Update initiated. The server will restart shortly.",
+        timestamp: new Date().toISOString()
+      });
+      
+      // Give client time to receive response before restart
+      setTimeout(() => {
+        console.log("[Update] Restarting application...");
+        process.exit(0);
+      }, 1000);
+    } catch (error: any) {
+      console.error("[Update] Error:", error);
+      res.status(500).json({ error: error.message || "Update failed" });
+    }
+  });
+
+  // Generate update confirmation token
+  app.get("/api/admin/update-token", requireAdmin, async (req, res) => {
+    try {
+      const token = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      res.json({ token });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
