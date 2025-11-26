@@ -242,12 +242,6 @@ export function AppSidebar() {
       show: isAdmin,
     },
     {
-      title: t('dashboardSettings', lang),
-      url: "/dashboard-settings",
-      icon: BarChart3,
-      show: isAdmin,
-    },
-    {
       title: t('externalLinks', lang),
       url: "/external-links",
       icon: LinkIcon,
