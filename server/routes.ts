@@ -1320,6 +1320,8 @@ export function registerRoutes(app: Express): Server {
     try {
       let { title, description, priority } = req.body;
       
+      console.log("[Ticket] Received data:", { title, description, priority, userId: req.user.id });
+      
       // Normalize priority
       priority = priority || "normal";
       
@@ -1328,18 +1330,25 @@ export function registerRoutes(app: Express): Server {
       description = String(description || "").trim();
       priority = String(priority || "normal").trim().toLowerCase();
       
+      console.log("[Ticket] After normalization:", { title, description, priority });
+      
       if (!title) {
+        console.log("[Ticket] Title is empty");
         return res.status(400).send("Title is required");
       }
       if (!description) {
+        console.log("[Ticket] Description is empty");
         return res.status(400).send("Description is required");
       }
       
       const validPriorities = ["low", "normal", "high"];
       if (!validPriorities.includes(priority)) {
+        console.log("[Ticket] Invalid priority:", priority);
         priority = "normal";
       }
 
+      console.log("[Ticket] Inserting into DB with:", { title, description, priority, createdBy: req.user.id });
+      
       const ticket = await db.insert(tickets).values({
         title,
         description,
@@ -1348,9 +1357,12 @@ export function registerRoutes(app: Express): Server {
         status: "open",
       }).returning();
       
+      console.log("[Ticket] Created successfully:", ticket[0]);
       res.status(201).json(ticket[0]);
     } catch (error: any) {
-      console.error("[Ticket] Error:", error.message || error);
+      console.error("[Ticket] Error:", error);
+      console.error("[Ticket] Error message:", error.message);
+      console.error("[Ticket] Error stack:", error.stack);
       res.status(500).send(error.message || "Failed to create ticket");
     }
   });
