@@ -87,6 +87,17 @@ export default {
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
+      fontSize: {
+        xs: "0.75rem",
+        sm: "0.875rem",
+        base: "0.95rem",
+        lg: "1.05rem",
+        xl: "1.15rem",
+        "2xl": "1.3rem",
+        "3xl": "1.5rem",
+        "4xl": "1.75rem",
+        "5xl": "2rem",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
