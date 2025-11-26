@@ -24,8 +24,9 @@ export default function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
 
   // Load settings from database on mount
-  const { data: allSettings } = useQuery<Record<string, string>>({
+  const { data: allSettings, refetch } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
+    staleTime: 0, // Always fetch fresh data
   });
 
   useEffect(() => {
@@ -46,37 +47,47 @@ export default function EmailSettingsPage() {
   };
 
   const handleSaveSettings = async () => {
+    if (!settings.smtpHost || !settings.smtpUser || !settings.smtpPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in SMTP Host, User, and Password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Save all settings
       const updates = [
-        { key: "SMTP_HOST", value: settings.smtpHost },
-        { key: "SMTP_PORT", value: settings.smtpPort },
-        { key: "SMTP_USER", value: settings.smtpUser },
-        { key: "SMTP_PASSWORD", value: settings.smtpPassword },
-        { key: "SMTP_FROM", value: settings.smtpFrom },
+        { key: "SMTP_HOST", value: settings.smtpHost.trim() },
+        { key: "SMTP_PORT", value: settings.smtpPort.trim() },
+        { key: "SMTP_USER", value: settings.smtpUser.trim() },
+        { key: "SMTP_PASSWORD", value: settings.smtpPassword.trim() },
+        { key: "SMTP_FROM", value: settings.smtpFrom.trim() },
         { key: "SMTP_SECURE", value: settings.smtpSecure ? "true" : "false" },
       ];
 
       await Promise.all(
         updates.map((update) =>
           apiRequest("PATCH", `/api/settings/${update.key}`, { 
-            value: typeof update.value === 'string' ? update.value.trim() : update.value 
+            value: update.value
           })
         )
       );
 
-      // Invalidate cache to reload settings
+      // Invalidate cache and refresh
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      await refetch();
 
       toast({
         title: "Success",
-        description: "Email settings saved successfully",
+        description: "Email settings saved successfully!",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save email settings",
+        description: error.message || "Failed to save email settings",
         variant: "destructive",
       });
     } finally {
@@ -85,10 +96,19 @@ export default function EmailSettingsPage() {
   };
 
   const handleTestEmail = async () => {
-    if (!settings.smtpHost) {
+    if (!testEmail) {
       toast({
         title: "Error",
-        description: "Please configure SMTP settings first",
+        description: "Please enter a test email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!settings.smtpHost || !settings.smtpUser || !settings.smtpPassword) {
+      toast({
+        title: "Error",
+        description: "Please save SMTP settings first (Host, User, Password required)",
         variant: "destructive",
       });
       return;
@@ -96,15 +116,16 @@ export default function EmailSettingsPage() {
 
     setTesting(true);
     try {
-      await apiRequest("POST", "/api/settings/test-email", { testEmail });
+      const result = await apiRequest("POST", "/api/settings/test-email", { testEmail });
       toast({
         title: "Success",
-        description: "Test email sent successfully",
+        description: "Test email sent successfully! Check your inbox.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Test email error:", error);
       toast({
         title: "Error",
-        description: "Failed to send test email",
+        description: error?.message || "Failed to send test email. Check your SMTP credentials.",
         variant: "destructive",
       });
     } finally {
