@@ -97,6 +97,9 @@ export interface IStorage {
     inProgressTickets: number;
     closedTickets: number;
   }>;
+
+  getSetting(key: string): Promise<string | undefined>;
+  setSetting(key: string, value: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -395,6 +398,20 @@ export class DatabaseStorage implements IStorage {
       inProgressTickets: inProgressTicketCount.count,
       closedTickets: closedTicketCount.count,
     };
+  }
+
+  async getSetting(key: string): Promise<string | undefined> {
+    const [row] = await db.select().from(settings).where(eq(settings.key, key));
+    return row?.value || undefined;
+  }
+
+  async setSetting(key: string, value: string): Promise<void> {
+    const [existing] = await db.select().from(settings).where(eq(settings.key, key));
+    if (existing) {
+      await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
+    } else {
+      await db.insert(settings).values({ key, value, createdAt: new Date(), updatedAt: new Date() });
+    }
   }
 }
 
