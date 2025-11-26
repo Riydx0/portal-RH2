@@ -184,13 +184,13 @@ export default function EmailSettingsPage() {
       const currentAttachments = Array.isArray(newFeature.attachments) ? newFeature.attachments : [];
       setNewFeature({
         ...newFeature,
-        attachments: [...currentAttachments, ...newAttachments],
+        attachments: [...(currentAttachments || []), ...newAttachments],
       });
     } else if (editingFeature) {
-      const currentAttachments = Array.isArray(editingFeature.attachments) ? editingFeature.attachments : [];
+      const currentAttachments = editingFeature.attachments && Array.isArray(editingFeature.attachments) ? editingFeature.attachments : [];
       setEditingFeature({
         ...editingFeature,
-        attachments: [...currentAttachments, ...newAttachments],
+        attachments: [...(currentAttachments || []), ...newAttachments],
       });
     }
 
