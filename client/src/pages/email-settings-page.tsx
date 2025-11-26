@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Mail, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Mail, Check, AlertCircle, Eye, EyeOff, Send, Upload } from "lucide-react";
 
 export default function EmailSettingsPage() {
   const { lang } = useLanguage();
@@ -32,7 +32,13 @@ export default function EmailSettingsPage() {
     description: "",
     subject: "",
     preview: "",
+    fontFamily: "Arial",
+    fontSize: "16",
+    textColor: "#000000",
+    backgroundColor: "#ffffff",
+    attachments: [] as any[],
   });
+  const [testingFeature, setTestingFeature] = useState<string | null>(null);
 
   // Load settings from database on mount
   const { data: allSettings, refetch } = useQuery<Record<string, string>>({
@@ -74,6 +80,11 @@ export default function EmailSettingsPage() {
       description: newFeature.description,
       subject: newFeature.subject,
       preview: newFeature.preview,
+      fontFamily: newFeature.fontFamily,
+      fontSize: newFeature.fontSize,
+      textColor: newFeature.textColor,
+      backgroundColor: newFeature.backgroundColor,
+      attachments: newFeature.attachments,
     });
     
     setNewFeature({ name: "", description: "", subject: "", preview: "" });
@@ -105,6 +116,75 @@ export default function EmailSettingsPage() {
     toast({
       title: "Success",
       description: "Email feature updated successfully!",
+    });
+  };
+
+  const handleTestFeature = async (feature: any) => {
+    if (!testEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter a test email address first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTestingFeature(feature.id);
+    try {
+      // Create a styled version of the email
+      const styledEmail = `
+        <div style="font-family: ${feature.fontFamily || "Arial"}; font-size: ${feature.fontSize || "16"}px; color: ${feature.textColor || "#000"}; background-color: ${feature.backgroundColor || "#fff"}; padding: 20px;">
+          <h3>${feature.subject}</h3>
+          <p>${feature.preview.replace(/\n/g, "<br />")}</p>
+        </div>
+      `;
+      
+      await apiRequest("POST", "/api/settings/test-email", { 
+        testEmail,
+        customHtml: styledEmail,
+        featureName: feature.name
+      });
+      
+      toast({
+        title: "Success",
+        description: `Test email for "${feature.name}" sent successfully!`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send test email",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingFeature(null);
+    }
+  };
+
+  const handleFileUpload = (files: FileList | null, isNew: boolean = true) => {
+    if (!files) return;
+    
+    const newAttachments = Array.from(files).map(file => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file,
+    }));
+
+    if (isNew) {
+      setNewFeature({
+        ...newFeature,
+        attachments: [...newFeature.attachments, ...newAttachments],
+      });
+    } else if (editingFeature) {
+      setEditingFeature({
+        ...editingFeature,
+        attachments: [...editingFeature.attachments, ...newAttachments],
+      });
+    }
+
+    toast({
+      title: "Success",
+      description: `${newAttachments.length} file(s) added`,
     });
   };
 
@@ -504,6 +584,94 @@ export default function EmailSettingsPage() {
                     data-testid="textarea-feature-preview"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Font</label>
+                    <select
+                      value={newFeature.fontFamily}
+                      onChange={(e) => setNewFeature({ ...newFeature, fontFamily: e.target.value })}
+                      className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                      data-testid="select-font-family"
+                    >
+                      <option>Arial</option>
+                      <option>Georgia</option>
+                      <option>Times New Roman</option>
+                      <option>Courier New</option>
+                      <option>Verdana</option>
+                      <option>Comic Sans MS</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Font Size</label>
+                    <input
+                      type="number"
+                      value={newFeature.fontSize}
+                      onChange={(e) => setNewFeature({ ...newFeature, fontSize: e.target.value })}
+                      min="10"
+                      max="32"
+                      className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                      data-testid="input-font-size"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Text Color</label>
+                    <input
+                      type="color"
+                      value={newFeature.textColor}
+                      onChange={(e) => setNewFeature({ ...newFeature, textColor: e.target.value })}
+                      className="w-full p-1 border rounded-md"
+                      data-testid="input-text-color"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Background</label>
+                    <input
+                      type="color"
+                      value={newFeature.backgroundColor}
+                      onChange={(e) => setNewFeature({ ...newFeature, backgroundColor: e.target.value })}
+                      className="w-full p-1 border rounded-md"
+                      data-testid="input-bg-color"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Attachments (PDF/Images)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png,.gif"
+                      onChange={(e) => handleFileUpload(e.target.files, true)}
+                      className="flex-1 text-sm"
+                      data-testid="input-attachments"
+                    />
+                    <Upload className="h-4 w-4 mt-2" />
+                  </div>
+                  {newFeature.attachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {newFeature.attachments.map((att: any, idx: number) => (
+                        <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                          <span>{att.name}</span>
+                          <button
+                            onClick={() => setNewFeature({
+                              ...newFeature,
+                              attachments: newFeature.attachments.filter((_: any, i: number) => i !== idx)
+                            })}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-2">
                   <Button onClick={handleAddFeature} className="flex-1" data-testid="button-save-new-feature">
                     Save Feature
@@ -552,9 +720,100 @@ export default function EmailSettingsPage() {
                     data-testid="textarea-edit-feature-preview"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Font</label>
+                    <select
+                      value={editingFeature.fontFamily || "Arial"}
+                      onChange={(e) => setEditingFeature({ ...editingFeature, fontFamily: e.target.value })}
+                      className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                    >
+                      <option>Arial</option>
+                      <option>Georgia</option>
+                      <option>Times New Roman</option>
+                      <option>Courier New</option>
+                      <option>Verdana</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Font Size</label>
+                    <input
+                      type="number"
+                      value={editingFeature.fontSize || "16"}
+                      onChange={(e) => setEditingFeature({ ...editingFeature, fontSize: e.target.value })}
+                      min="10"
+                      max="32"
+                      className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Text Color</label>
+                    <input
+                      type="color"
+                      value={editingFeature.textColor || "#000000"}
+                      onChange={(e) => setEditingFeature({ ...editingFeature, textColor: e.target.value })}
+                      className="w-full p-1 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Background</label>
+                    <input
+                      type="color"
+                      value={editingFeature.backgroundColor || "#ffffff"}
+                      onChange={(e) => setEditingFeature({ ...editingFeature, backgroundColor: e.target.value })}
+                      className="w-full p-1 border rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Attachments</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png,.gif"
+                      onChange={(e) => handleFileUpload(e.target.files, false)}
+                      className="flex-1 text-sm"
+                    />
+                  </div>
+                  {editingFeature.attachments && editingFeature.attachments.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {editingFeature.attachments.map((att: any, idx: number) => (
+                        <div key={idx} className="text-xs text-muted-foreground flex justify-between">
+                          <span>{att.name || att}</span>
+                          <button
+                            onClick={() => setEditingFeature({
+                              ...editingFeature,
+                              attachments: editingFeature.attachments.filter((_: any, i: number) => i !== idx)
+                            })}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-2">
                   <Button onClick={handleUpdateFeature} className="flex-1" data-testid="button-save-edited-feature">
                     Update Feature
+                  </Button>
+                  <Button 
+                    onClick={() => handleTestFeature(editingFeature)} 
+                    variant="outline" 
+                    className="flex-1 gap-2"
+                    disabled={testingFeature === editingFeature.id}
+                    data-testid="button-test-edited-feature"
+                  >
+                    <Send className="h-4 w-4" />
+                    {testingFeature === editingFeature.id ? "Sending..." : "Test"}
                   </Button>
                   <Button onClick={() => setEditingFeature(null)} variant="outline" className="flex-1">
                     Cancel
@@ -576,10 +835,41 @@ export default function EmailSettingsPage() {
                     
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                       <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Email Preview:</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                      <div 
+                        style={{
+                          fontFamily: emailFeatures.find((f) => f.id === selectedFeature)?.fontFamily || "Arial",
+                          fontSize: `${emailFeatures.find((f) => f.id === selectedFeature)?.fontSize || "16"}px`,
+                          color: emailFeatures.find((f) => f.id === selectedFeature)?.textColor || "#000",
+                          backgroundColor: emailFeatures.find((f) => f.id === selectedFeature)?.backgroundColor || "#fff",
+                          padding: "10px",
+                          borderRadius: "4px",
+                        }}
+                        className="text-sm whitespace-pre-wrap leading-relaxed"
+                      >
                         {emailFeatures.find((f) => f.id === selectedFeature)?.preview}
-                      </p>
+                      </div>
                     </div>
+
+                    {emailFeatures.find((f) => f.id === selectedFeature)?.attachments?.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Attachments:</p>
+                        <div className="space-y-1">
+                          {emailFeatures.find((f) => f.id === selectedFeature)?.attachments.map((att: any, idx: number) => (
+                            <p key={idx} className="text-sm text-muted-foreground">📎 {att.name || att}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => handleTestFeature(emailFeatures.find((f) => f.id === selectedFeature)!)}
+                      className="w-full mt-4 gap-2"
+                      disabled={testingFeature === selectedFeature}
+                      data-testid="button-test-feature"
+                    >
+                      <Send className="h-4 w-4" />
+                      {testingFeature === selectedFeature ? "Sending Test..." : "Send Test Email"}
+                    </Button>
                   </>
                 )}
               </div>
