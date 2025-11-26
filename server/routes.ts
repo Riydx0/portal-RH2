@@ -1318,28 +1318,40 @@ export function registerRoutes(app: Express): Server {
   // Client endpoints for tickets
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
-      const { title, description, priority } = req.body;
+      let { title, description, priority } = req.body;
       
-      if (!title || !description) {
-        return res.status(400).json({ error: "Title and description are required" });
+      // Normalize priority
+      priority = priority || "normal";
+      
+      // Ensure values are trimmed strings
+      title = String(title || "").trim();
+      description = String(description || "").trim();
+      priority = String(priority || "normal").trim().toLowerCase();
+      
+      if (!title) {
+        return res.status(400).send("Title is required");
+      }
+      if (!description) {
+        return res.status(400).send("Description is required");
       }
       
-      if (!["low", "normal", "high"].includes(priority)) {
-        return res.status(400).json({ error: "Invalid priority value" });
+      const validPriorities = ["low", "normal", "high"];
+      if (!validPriorities.includes(priority)) {
+        priority = "normal";
       }
 
       const ticket = await db.insert(tickets).values({
-        title: title.trim(),
-        description: description.trim(),
-        priority: priority as "low" | "normal" | "high",
+        title,
+        description,
+        priority: priority as any,
         createdBy: req.user.id,
         status: "open",
       }).returning();
       
       res.status(201).json(ticket[0]);
     } catch (error: any) {
-      console.error("[Ticket] Error creating ticket:", error);
-      res.status(500).json({ error: error.message || "Failed to create ticket" });
+      console.error("[Ticket] Error:", error.message || error);
+      res.status(500).send(error.message || "Failed to create ticket");
     }
   });
 
