@@ -1319,16 +1319,27 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/tickets", requireAuth, async (req, res) => {
     try {
       const { title, description, priority } = req.body;
+      
+      if (!title || !description) {
+        return res.status(400).json({ error: "Title and description are required" });
+      }
+      
+      if (!["low", "normal", "high"].includes(priority)) {
+        return res.status(400).json({ error: "Invalid priority value" });
+      }
+
       const ticket = await db.insert(tickets).values({
-        title,
-        description,
-        priority,
+        title: title.trim(),
+        description: description.trim(),
+        priority: priority as "low" | "normal" | "high",
         createdBy: req.user.id,
         status: "open",
       }).returning();
+      
       res.status(201).json(ticket[0]);
     } catch (error: any) {
-      res.status(400).send(error.message);
+      console.error("[Ticket] Error creating ticket:", error);
+      res.status(500).json({ error: error.message || "Failed to create ticket" });
     }
   });
 
