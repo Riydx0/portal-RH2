@@ -900,8 +900,16 @@ export function registerRoutes(app: Express): Server {
         expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes
       });
 
-      // In production, send email. For now, log to console
-      console.log(`[Password Reset] Email: ${email}, Code: ${resetCode}`);
+      // Send password reset email
+      try {
+        const { sendPasswordResetEmail } = await import("./email.js");
+        await sendPasswordResetEmail(email, resetCode);
+      } catch (emailError: any) {
+        console.error("[Password Reset] Failed to send email:", emailError.message);
+        // Don't fail the request, just log the error
+        console.log(`[Password Reset] For testing, code is: ${resetCode}`);
+      }
+
       res.json({ message: "Reset code sent to email" });
     } catch (error: any) {
       res.status(500).send(error.message);

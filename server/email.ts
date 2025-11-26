@@ -122,6 +122,44 @@ export async function sendSubscriptionEmail(
   });
 }
 
+export async function sendPasswordResetEmail(
+  email: string,
+  resetCode: string
+) {
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Password Reset Request</h2>
+      <p>Dear User,</p>
+      <p>We received a request to reset your password. If you didn't make this request, please ignore this email.</p>
+      <div style="background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+        <p style="font-size: 24px; font-weight: bold; color: #007bff; letter-spacing: 2px;">${resetCode}</p>
+        <p style="font-size: 12px; color: #666;">This code expires in 15 minutes</p>
+      </div>
+      <p>Enter this code on the password reset page to proceed.</p>
+      <p>If you have any questions, feel free to contact our support team.</p>
+      <p>Best regards,<br>The Support Team</p>
+    </div>
+  `;
+
+  try {
+    const transporter = await getTransporter();
+    const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
+    
+    const info = await transporter.sendMail({
+      from: smtpFrom,
+      to: email,
+      subject: "Password Reset Code",
+      html: htmlContent,
+    });
+    
+    console.log(`[Email] Password reset code sent to ${email}. MessageId: ${info.messageId}`);
+    return info;
+  } catch (error: any) {
+    console.error(`[Email] Failed to send password reset email to ${email}:`, error.message);
+    throw error;
+  }
+}
+
 export async function sendInvoiceEmail(
   email: string,
   invoiceNumber: string,
