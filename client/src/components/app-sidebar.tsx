@@ -43,6 +43,7 @@ import {
   Code,
   Smartphone,
   CreditCard,
+  RefreshCw,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -251,6 +252,12 @@ export function AppSidebar() {
       title: t('activityLogs', lang),
       url: "/settings/logs",
       icon: FileText,
+      show: isAdmin,
+    },
+    {
+      title: "Updates",
+      url: "/updates",
+      icon: RefreshCw,
       show: isAdmin,
     },
   ].filter(item => item.show);

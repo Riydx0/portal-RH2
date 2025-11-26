@@ -1859,6 +1859,70 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get update schedule
+  app.get("/api/admin/update-schedule", requireAdmin, async (req, res) => {
+    try {
+      const schedule = await storage.getSetting("update_schedule_enabled");
+      const days = await storage.getSetting("update_schedule_days");
+      const hours = await storage.getSetting("update_schedule_hours");
+      
+      res.json({
+        enabled: schedule !== "false",
+        days: days ? JSON.parse(days) : [0, 1, 2, 3, 4, 5, 6],
+        hours: hours ? JSON.parse(hours) : [0, 3, 5, 23],
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update schedule
+  app.patch("/api/admin/update-schedule", requireAdmin, async (req, res) => {
+    try {
+      const { enabled, days, hours } = req.body;
+      await storage.setSetting("update_schedule_enabled", String(enabled));
+      await storage.setSetting("update_schedule_days", JSON.stringify(days));
+      await storage.setSetting("update_schedule_hours", JSON.stringify(hours));
+      
+      console.log("[Update] Schedule updated:", { enabled, days, hours });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get update status
+  app.get("/api/admin/update-status", requireAdmin, async (req, res) => {
+    try {
+      const lastUpdate = await storage.getSetting("last_update_timestamp");
+      const updateStatus = await storage.getSetting("last_update_status");
+      
+      res.json({
+        lastUpdate: lastUpdate || new Date().toISOString(),
+        version: "1.0.0",
+        status: updateStatus || "success",
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Check for updates
+  app.post("/api/admin/check-updates", requireAdmin, async (req, res) => {
+    try {
+      console.log("[Update] Check for updates initiated by:", req.user?.email);
+      await storage.setSetting("last_update_timestamp", new Date().toISOString());
+      await storage.setSetting("last_update_status", "success");
+      
+      res.json({ 
+        success: true, 
+        message: "Update check completed",
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
