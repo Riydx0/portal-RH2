@@ -87,13 +87,13 @@ export function AppSidebar() {
       title: "Request License",
       url: "/request-license",
       icon: Key,
-      show: true,
+      show: isAdmin,
     },
     {
       title: isArabic ? "اشتراكي" : "My Subscription",
       url: "/my-subscriptions",
       icon: CreditCard,
-      show: true,
+      show: isAdmin,
     },
   ];
 
