@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Mail, Check, AlertCircle } from "lucide-react";
+import { Mail, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function EmailSettingsPage() {
   const { lang } = useLanguage();
@@ -22,6 +23,8 @@ export default function EmailSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
 
   // Load settings from database on mount
   const { data: allSettings, refetch } = useQuery<Record<string, string>>({
@@ -133,6 +136,37 @@ export default function EmailSettingsPage() {
     }
   };
 
+  const emailFeatures = [
+    {
+      id: "welcome",
+      name: "Welcome Emails",
+      description: "Sent when new users create an account",
+      subject: "Welcome to Our Platform!",
+      preview: "Thank you for creating an account with us. We're excited to have you on board!\n\nYou can now:\n• Access all software downloads\n• Create and manage support tickets\n• View your subscription and invoices\n• Manage your account settings",
+    },
+    {
+      id: "subscription",
+      name: "Subscription Confirmation",
+      description: "Sent when user subscribes to a plan",
+      subject: "Welcome to {Plan} Plan",
+      preview: "Thank you for subscribing to our {Plan} plan.\n\nPlan: {Plan}\nMonthly Cost: ${Price}\n\nYour subscription is now active. You can manage your subscription anytime in your dashboard.",
+    },
+    {
+      id: "invoice",
+      name: "Invoice Emails",
+      description: "Sent when an invoice is generated",
+      subject: "Invoice #{InvoiceNumber}",
+      preview: "Your invoice is ready. Please see the details below:\n\nInvoice Number: #{InvoiceNumber}\nAmount: ${Amount}\nDue Date: {DueDate}\n\nPlease make payment at your earliest convenience.",
+    },
+    {
+      id: "ticket",
+      name: "Support Ticket Notifications",
+      description: "Sent for support ticket updates",
+      subject: "Support Ticket Update",
+      preview: "Your support ticket has been updated.\n\nTicket: {TicketNumber}\nStatus: {Status}\nPriority: {Priority}\n\nYou can view full details in your dashboard.",
+    },
+  ];
+
   return (
     <div className="flex-1 space-y-6 p-6 lg:p-8">
       <div>
@@ -148,25 +182,39 @@ export default function EmailSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
-            <div className="flex gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-blue-900 dark:text-blue-100">
-                <p className="font-semibold">Environment Variables Setup</p>
-                <p className="mt-1 text-xs opacity-90">
-                  Set these in your Replit secrets for production:
-                </p>
-                <code className="block mt-2 text-xs bg-blue-100 dark:bg-blue-900 p-2 rounded">
-                  SMTP_HOST=smtp.gmail.com
-                  <br />
-                  SMTP_PORT=587
-                  <br />
-                  SMTP_USER=your-email@gmail.com
-                  <br />
-                  SMTP_PASSWORD=your-app-password
-                  <br />
-                  SMTP_FROM=noreply@yourcompany.com
-                </code>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
+              <div className="flex gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-blue-900 dark:text-blue-100">
+                  <p className="font-semibold">Environment Variables Setup</p>
+                  <p className="mt-1 text-xs opacity-90">
+                    Set these in your Replit secrets for production:
+                  </p>
+                  <code className="block mt-2 text-xs bg-blue-100 dark:bg-blue-900 p-2 rounded">
+                    SMTP_HOST=smtp.gmail.com
+                    <br />
+                    SMTP_PORT=465
+                    <br />
+                    SMTP_USER=your-email@gmail.com
+                    <br />
+                    SMTP_PASSWORD=your-app-password
+                    <br />
+                    SMTP_FROM=noreply@yourcompany.com
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 text-sm">
+              <div className="flex gap-2">
+                <AlertCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                <div className="text-green-900 dark:text-green-100">
+                  <p className="font-semibold">Port Guide</p>
+                  <p className="mt-2 text-xs"><strong>Port 465 (Recommended)</strong><br />SSL Direct - Secure from start</p>
+                  <p className="mt-2 text-xs"><strong>Port 587</strong><br />STARTTLS - Upgrade to secure</p>
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-400"><strong>Port 25</strong><br />Unencrypted - Not secure ❌</p>
+                </div>
               </div>
             </div>
           </div>
@@ -202,12 +250,22 @@ export default function EmailSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">SMTP Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={settings.smtpPassword}
-                onChange={(e) => handleChange("smtpPassword", e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={settings.smtpPassword}
+                  onChange={(e) => handleChange("smtpPassword", e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -271,28 +329,76 @@ export default function EmailSettingsPage() {
           <CardTitle>Email Features</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <span>Welcome emails for new users</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <span>Subscription confirmation emails</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <span>Invoice emails with payment details</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <span>Support ticket notifications</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <span>Password reset links</span>
-            </li>
-          </ul>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Select an email type to preview its content:</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {emailFeatures.map((feature) => (
+                <button
+                  key={feature.id}
+                  onClick={() => setSelectedFeature(feature.id)}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    selectedFeature === feature.id
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                      : "border-border hover:border-blue-300 dark:hover:border-blue-700"
+                  }`}
+                  data-testid={`button-email-feature-${feature.id}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{feature.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{feature.description}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedFeature && (
+              <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-4 mt-4">
+                {emailFeatures.find((f) => f.id === selectedFeature) && (
+                  <>
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase">Subject Line:</p>
+                      <p className="text-sm font-medium mt-1 text-foreground">
+                        {emailFeatures.find((f) => f.id === selectedFeature)?.subject}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Email Preview:</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                        {emailFeatures.find((f) => f.id === selectedFeature)?.preview}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 pt-4 border-t">
+              <h4 className="font-semibold mb-3">All Available Email Features:</h4>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Welcome emails for new users</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Subscription confirmation emails</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Invoice emails with payment details</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Support ticket notifications</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
