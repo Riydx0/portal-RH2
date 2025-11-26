@@ -87,7 +87,17 @@ export default function EmailSettingsPage() {
       attachments: newFeature.attachments,
     });
     
-    setNewFeature({ name: "", description: "", subject: "", preview: "" });
+    setNewFeature({ 
+      name: "", 
+      description: "", 
+      subject: "", 
+      preview: "",
+      fontFamily: "Arial",
+      fontSize: "16",
+      textColor: "#000000",
+      backgroundColor: "#ffffff",
+      attachments: [],
+    });
     setShowAddForm(false);
     setSelectedFeature(id);
     
@@ -171,14 +181,16 @@ export default function EmailSettingsPage() {
     }));
 
     if (isNew) {
+      const currentAttachments = Array.isArray(newFeature.attachments) ? newFeature.attachments : [];
       setNewFeature({
         ...newFeature,
-        attachments: [...newFeature.attachments, ...newAttachments],
+        attachments: [...currentAttachments, ...newAttachments],
       });
     } else if (editingFeature) {
+      const currentAttachments = Array.isArray(editingFeature.attachments) ? editingFeature.attachments : [];
       setEditingFeature({
         ...editingFeature,
-        attachments: [...editingFeature.attachments, ...newAttachments],
+        attachments: [...currentAttachments, ...newAttachments],
       });
     }
 
