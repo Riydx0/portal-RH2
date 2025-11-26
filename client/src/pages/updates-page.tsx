@@ -166,11 +166,18 @@ export default function UpdatesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Updates</h1>
-        <p className="text-muted-foreground">
-          Manage platform and application updates
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Updates</h1>
+          <p className="text-muted-foreground">
+            Manage platform and application updates
+          </p>
+        </div>
+        {status && (
+          <Badge variant="default" className="text-lg px-4 py-2" data-testid="badge-version">
+            v{status.version}
+          </Badge>
+        )}
       </div>
 
       {/* Update Status Card */}
@@ -217,7 +224,6 @@ export default function UpdatesPage() {
           <Button
             onClick={() => checkUpdatesMutation.mutate()}
             disabled={checkUpdatesMutation.isPending}
-            className="w-full"
             data-testid="button-check-updates"
             size="lg"
           >
