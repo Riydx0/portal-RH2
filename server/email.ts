@@ -220,3 +220,33 @@ export async function sendWelcomeEmail(
     html: htmlContent,
   });
 }
+
+export async function sendCustomEmailWithAttachments(
+  email: string,
+  subject: string,
+  htmlContent: string,
+  attachments?: Array<{ filename: string; content: Buffer | string }>
+) {
+  try {
+    const transporter = await getTransporter();
+    const smtpFrom = process.env.SMTP_FROM || "noreply@example.com";
+    
+    const mailOptions: any = {
+      from: smtpFrom,
+      to: email,
+      subject,
+      html: htmlContent,
+    };
+
+    if (attachments && attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email] Custom email sent to ${email} with ${attachments?.length || 0} attachments. MessageId: ${info.messageId}`);
+    return info;
+  } catch (error: any) {
+    console.error(`[Email] Failed to send custom email to ${email}:`, error.message);
+    throw error;
+  }
+}

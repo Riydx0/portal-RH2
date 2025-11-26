@@ -149,10 +149,34 @@ export default function EmailSettingsPage() {
         </div>
       `;
       
+      // Process attachments - convert File objects to base64
+      const processedAttachments = [];
+      if (feature.attachments && Array.isArray(feature.attachments)) {
+        for (const att of feature.attachments) {
+          if (att.file && att.file instanceof File) {
+            // Convert File to base64
+            const arrayBuffer = await att.file.arrayBuffer();
+            const base64 = Buffer.from(arrayBuffer).toString('base64');
+            processedAttachments.push({
+              filename: att.name,
+              content: base64,
+              encoding: 'base64'
+            });
+          } else if (typeof att === 'string') {
+            // Already a string (filename or base64)
+            processedAttachments.push({
+              filename: att,
+              content: att
+            });
+          }
+        }
+      }
+      
       await apiRequest("POST", "/api/settings/test-email", { 
         testEmail,
         customHtml: styledEmail,
-        featureName: feature.name
+        featureName: feature.name,
+        attachments: processedAttachments
       });
       
       toast({

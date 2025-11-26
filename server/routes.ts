@@ -1285,9 +1285,27 @@ export function registerRoutes(app: Express): Server {
   // Email test endpoint
   app.post("/api/settings/test-email", requireAdmin, async (req, res) => {
     try {
-      const { testEmail } = req.body;
-      const { sendWelcomeEmail } = await import("./email.js");
-      await sendWelcomeEmail(testEmail, "Test User");
+      const { testEmail, customHtml, featureName, attachments } = req.body;
+      const { sendWelcomeEmail, sendCustomEmailWithAttachments } = await import("./email.js");
+      
+      if (customHtml && featureName) {
+        // Send custom email with attachments
+        const processedAttachments = attachments?.map((att: any) => ({
+          filename: att.filename || att.name,
+          content: att.content || att.data,
+        })) || [];
+        
+        await sendCustomEmailWithAttachments(
+          testEmail,
+          `Test Email: ${featureName}`,
+          customHtml,
+          processedAttachments
+        );
+      } else {
+        // Send default welcome email
+        await sendWelcomeEmail(testEmail, "Test User");
+      }
+      
       res.json({ success: true, message: "Test email sent successfully" });
     } catch (error: any) {
       res.status(500).json({
