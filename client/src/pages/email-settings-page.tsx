@@ -25,6 +25,14 @@ export default function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [editingFeature, setEditingFeature] = useState<any>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newFeature, setNewFeature] = useState({
+    name: "",
+    description: "",
+    subject: "",
+    preview: "",
+  });
 
   // Load settings from database on mount
   const { data: allSettings, refetch } = useQuery<Record<string, string>>({
@@ -47,6 +55,71 @@ export default function EmailSettingsPage() {
 
   const handleChange = (field: string, value: any) => {
     setSettings({ ...settings, [field]: value });
+  };
+
+  const handleAddFeature = () => {
+    if (!newFeature.name || !newFeature.subject || !newFeature.preview) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const id = newFeature.name.toLowerCase().replace(/\s+/g, "_");
+    emailFeatures.push({
+      id,
+      name: newFeature.name,
+      description: newFeature.description,
+      subject: newFeature.subject,
+      preview: newFeature.preview,
+    });
+    
+    setNewFeature({ name: "", description: "", subject: "", preview: "" });
+    setShowAddForm(false);
+    setSelectedFeature(id);
+    
+    toast({
+      title: "Success",
+      description: "Email feature added successfully!",
+    });
+  };
+
+  const handleUpdateFeature = () => {
+    if (!editingFeature.name || !editingFeature.subject || !editingFeature.preview) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const index = emailFeatures.findIndex((f) => f.id === editingFeature.id);
+    if (index !== -1) {
+      emailFeatures[index] = editingFeature;
+    }
+    
+    setEditingFeature(null);
+    toast({
+      title: "Success",
+      description: "Email feature updated successfully!",
+    });
+  };
+
+  const handleDeleteFeature = (id: string) => {
+    const index = emailFeatures.findIndex((f) => f.id === id);
+    if (index !== -1) {
+      emailFeatures.splice(index, 1);
+      if (selectedFeature === id) {
+        setSelectedFeature(null);
+      }
+      toast({
+        title: "Success",
+        description: "Email feature deleted successfully!",
+      });
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -136,7 +209,7 @@ export default function EmailSettingsPage() {
     }
   };
 
-  const emailFeatures = [
+  const defaultFeatures = [
     {
       id: "welcome",
       name: "Welcome Emails",
@@ -166,6 +239,8 @@ export default function EmailSettingsPage() {
       preview: "Your support ticket has been updated.\n\nTicket: {TicketNumber}\nStatus: {Status}\nPriority: {Priority}\n\nYou can view full details in your dashboard.",
     },
   ];
+  
+  const emailFeatures = defaultFeatures;
 
   return (
     <div className="flex-1 space-y-6 p-6 lg:p-8">
@@ -334,26 +409,159 @@ export default function EmailSettingsPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {emailFeatures.map((feature) => (
-                <button
+                <div
                   key={feature.id}
-                  onClick={() => setSelectedFeature(feature.id)}
-                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all ${
                     selectedFeature === feature.id
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
                       : "border-border hover:border-blue-300 dark:hover:border-blue-700"
                   }`}
-                  data-testid={`button-email-feature-${feature.id}`}
                 >
-                  <div className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{feature.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{feature.description}</p>
+                  <button
+                    onClick={() => setSelectedFeature(feature.id)}
+                    className="w-full text-left"
+                    data-testid={`button-email-feature-${feature.id}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{feature.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{feature.description}</p>
+                      </div>
                     </div>
+                  </button>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingFeature(feature)}
+                      className="text-xs flex-1"
+                      data-testid={`button-edit-feature-${feature.id}`}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteFeature(feature.id)}
+                      className="text-xs text-red-600 dark:text-red-400 flex-1"
+                      data-testid={`button-delete-feature-${feature.id}`}
+                    >
+                      Delete
+                    </Button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
+
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
+              variant="outline"
+              className="w-full"
+              data-testid="button-add-email-feature"
+            >
+              + Add New Email Feature
+            </Button>
+
+            {showAddForm && (
+              <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold">Add New Email Feature</h4>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Feature Name</label>
+                  <Input
+                    placeholder="e.g., Password Reset Emails"
+                    value={newFeature.name}
+                    onChange={(e) => setNewFeature({ ...newFeature, name: e.target.value })}
+                    data-testid="input-feature-name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <Input
+                    placeholder="When this email is sent"
+                    value={newFeature.description}
+                    onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+                    data-testid="input-feature-description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Subject Line</label>
+                  <Input
+                    placeholder="e.g., Reset Your Password"
+                    value={newFeature.subject}
+                    onChange={(e) => setNewFeature({ ...newFeature, subject: e.target.value })}
+                    data-testid="input-feature-subject"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email Preview</label>
+                  <textarea
+                    placeholder="Email content..."
+                    value={newFeature.preview}
+                    onChange={(e) => setNewFeature({ ...newFeature, preview: e.target.value })}
+                    className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                    rows={4}
+                    data-testid="textarea-feature-preview"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleAddFeature} className="flex-1" data-testid="button-save-new-feature">
+                    Save Feature
+                  </Button>
+                  <Button onClick={() => setShowAddForm(false)} variant="outline" className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {editingFeature && (
+              <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold">Edit: {editingFeature.name}</h4>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Feature Name</label>
+                  <Input
+                    value={editingFeature.name}
+                    onChange={(e) => setEditingFeature({ ...editingFeature, name: e.target.value })}
+                    data-testid="input-edit-feature-name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <Input
+                    value={editingFeature.description}
+                    onChange={(e) => setEditingFeature({ ...editingFeature, description: e.target.value })}
+                    data-testid="input-edit-feature-description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Subject Line</label>
+                  <Input
+                    value={editingFeature.subject}
+                    onChange={(e) => setEditingFeature({ ...editingFeature, subject: e.target.value })}
+                    data-testid="input-edit-feature-subject"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email Preview</label>
+                  <textarea
+                    value={editingFeature.preview}
+                    onChange={(e) => setEditingFeature({ ...editingFeature, preview: e.target.value })}
+                    className="w-full p-2 border rounded-md bg-white dark:bg-slate-800 text-sm"
+                    rows={4}
+                    data-testid="textarea-edit-feature-preview"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleUpdateFeature} className="flex-1" data-testid="button-save-edited-feature">
+                    Update Feature
+                  </Button>
+                  <Button onClick={() => setEditingFeature(null)} variant="outline" className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {selectedFeature && (
               <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-4 mt-4">
