@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationsButton } from "@/components/notifications-button";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { useLanguage, initLanguage } from "@/lib/i18n";
+import { useLanguage, initLanguage, type Language } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import ShareDownloadPage from "@/pages/share-download-page";
@@ -101,6 +101,7 @@ function Router() {
 function AppContent() {
   const { lang } = useLanguage();
   const [location] = useLocation();
+  const previousLangRef = useRef<Language | null>(null);
 
   useEffect(() => {
     if (lang === 'ar') {
@@ -110,6 +111,18 @@ function AppContent() {
       document.documentElement.dir = 'ltr';
       document.documentElement.lang = 'en';
     }
+  }, [lang]);
+
+  useEffect(() => {
+    // Speak language change automatically
+    if (previousLangRef.current !== null && previousLangRef.current !== lang && 'speechSynthesis' in window) {
+      const text = lang === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language changed to English';
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+    previousLangRef.current = lang;
   }, [lang]);
 
   const isAuthPage = location === "/auth";
