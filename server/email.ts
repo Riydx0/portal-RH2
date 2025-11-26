@@ -24,37 +24,68 @@ async function getTransporter() {
       db.select().from(settingsTable).where(eq(settingsTable.key, "SMTP_FROM")).limit(1),
     ]);
 
-    const host = (settingsResults[0][0]?.value || process.env.SMTP_HOST || "localhost").trim();
-    const port = parseInt((settingsResults[1][0]?.value || process.env.SMTP_PORT || "587").trim());
+    const host = (settingsResults[0][0]?.value || process.env.SMTP_HOST || "").trim();
+    const portStr = (settingsResults[1][0]?.value || process.env.SMTP_PORT || "").trim();
+    const port = portStr ? parseInt(portStr) : 587;
     const user = (settingsResults[2][0]?.value || process.env.SMTP_USER || "").trim();
     const pass = (settingsResults[3][0]?.value || process.env.SMTP_PASSWORD || "").trim();
     const secure = ((settingsResults[4][0]?.value || process.env.SMTP_SECURE || "false").trim()) === "true";
     const from = (settingsResults[5][0]?.value || process.env.SMTP_FROM || "noreply@example.com").trim();
 
-    const transportConfig: any = {
-      host,
-      port,
-      secure,
-    };
-
-    if (user && pass) {
-      transportConfig.auth = { user, pass };
+    // If database has valid SMTP settings, use them
+    if (host && user && pass) {
+      const transportConfig: any = {
+        host,
+        port,
+        secure,
+        auth: { user, pass },
+      };
+      cachedTransporter = nodemailer.createTransport(transportConfig);
+      lastCacheTime = now;
+      return cachedTransporter;
     }
 
-    cachedTransporter = nodemailer.createTransport(transportConfig);
+    // Otherwise try environment variables
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+      cachedTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD,
+        },
+      });
+      lastCacheTime = now;
+      return cachedTransporter;
+    }
 
+    // Fallback: Create a test account using Ethereal Email
+    console.log("[Email] Creating Ethereal test account for testing...");
+    const testAccount = await nodemailer.createTestAccount();
+    cachedTransporter = nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
     lastCacheTime = now;
     return cachedTransporter;
   } catch (error) {
-    // Fallback to environment variables if database fails
+    console.error("[Email] Error in getTransporter:", error);
+    // Fallback to test account
+    const testAccount = await nodemailer.createTestAccount();
     cachedTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "localhost",
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: process.env.SMTP_USER ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      } : undefined,
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
     });
     lastCacheTime = now;
     return cachedTransporter;
