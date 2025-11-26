@@ -219,8 +219,9 @@ export default function UpdatesPage() {
             disabled={checkUpdatesMutation.isPending}
             className="w-full"
             data-testid="button-check-updates"
+            size="lg"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-5 w-5" />
             {checkUpdatesMutation.isPending ? "Checking..." : "Check for updates"}
           </Button>
         </CardContent>

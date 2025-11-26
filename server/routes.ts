@@ -1911,15 +1911,49 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/admin/check-updates", requireAdmin, async (req, res) => {
     try {
       console.log("[Update] Check for updates initiated by:", req.user?.email);
+      
+      // Get current system data hash
+      const softwareCount = await db.query.software.findMany();
+      const categoriesCount = await db.query.categories.findMany();
+      const usersCount = await db.query.users.findMany();
+      
+      const currentStateHash = JSON.stringify({
+        software: softwareCount.length,
+        categories: categoriesCount.length,
+        users: usersCount.length,
+        timestamp: Date.now(),
+      });
+      
+      // Get previous hash
+      const previousHash = await storage.getSetting("system_state_hash");
+      
+      // Check if system has been modified
+      const isModified = previousHash && previousHash !== currentStateHash;
+      
+      // Save new hash
+      await storage.setSetting("system_state_hash", currentStateHash);
       await storage.setSetting("last_update_timestamp", new Date().toISOString());
       await storage.setSetting("last_update_status", "success");
       
       res.json({ 
         success: true, 
         message: "Update check completed",
+        isModified: isModified || false,
+        changesDetected: isModified ? "Changes detected in system" : "No changes detected",
       });
     } catch (error: any) {
+      console.error("[Update] Check error:", error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get system version
+  app.get("/api/version", async (req, res) => {
+    try {
+      const versionFile = fs.readFileSync(path.join(process.cwd(), "VERSION"), "utf-8").trim();
+      res.json({ version: versionFile || "0.1.0" });
+    } catch {
+      res.json({ version: "0.1.0" });
     }
   });
 
