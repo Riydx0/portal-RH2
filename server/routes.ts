@@ -1957,6 +1957,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Health check endpoint (for Cloudron)
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Check database connection
+      const dbTest = await db.query.users.findFirst();
+      
+      res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        database: "connected",
+        uptime: process.uptime(),
+      });
+    } catch (error: any) {
+      res.status(503).json({
+        status: "error",
+        timestamp: new Date().toISOString(),
+        database: "disconnected",
+        error: error.message,
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

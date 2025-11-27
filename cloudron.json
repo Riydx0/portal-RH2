@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "title": "IT Service Portal",
+  "description": "Comprehensive IT Service Management Platform with SaaS capabilities",
+  "tagline": "Centralized IT Services Management",
+  "author": "IT Department",
+  "website": "https://github.com/Riydx0/portal-RH2",
+  "contactEmail": "support@example.com",
+  "icon": "file://icon.png",
+  "postInstallMessage": "IT Service Portal has been installed successfully! Access it at https://[subdomain].[domain]",
+  "minVersion": "7.4.0",
+  "maxVersion": "7.99.0",
+  "addons": {
+    "postgresql": {
+      "version": "13"
+    }
+  },
+  "ports": {
+    "PORT": {
+      "description": "Port for the application",
+      "defaultValue": 5000
+    }
+  },
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment (production/development)",
+      "defaultValue": "production"
+    },
+    "SESSION_SECRET": {
+      "description": "Session secret key for securing sessions",
+      "defaultValue": "",
+      "isSecret": true
+    },
+    "SMTP_HOST": {
+      "description": "SMTP server hostname (e.g., smtp.gmail.com)",
+      "defaultValue": "smtp.gmail.com"
+    },
+    "SMTP_PORT": {
+      "description": "SMTP port (587 for TLS, 465 for SSL)",
+      "defaultValue": "587"
+    },
+    "SMTP_USER": {
+      "description": "SMTP username/email address",
+      "defaultValue": ""
+    },
+    "SMTP_PASSWORD": {
+      "description": "SMTP password or app password",
+      "defaultValue": "",
+      "isSecret": true
+    },
+    "SMTP_FROM": {
+      "description": "From email address for notifications",
+      "defaultValue": "noreply@example.com"
+    },
+    "SMTP_SECURE": {
+      "description": "Use SSL/TLS (true for port 465, false for port 587)",
+      "defaultValue": "false"
+    }
+  },
+  "healthCheck": {
+    "url": "http://localhost:5000/api/health",
+    "initialDelay": 30,
+    "interval": 10,
+    "timeout": 5,
+    "maxRetries": 3
+  },
+  "databases": {
+    "postgresql": {
+      "version": "13"
+    }
+  },
+  "documentation": "https://github.com/Riydx0/portal-RH2#readme"
+}
