@@ -1,210 +1,375 @@
 # IT Service Portal v0.1.0
 
-منصة خدمات تقنية متكاملة مع قدرات SaaS شاملة
+A comprehensive SaaS-enabled IT Service Management platform for managing software distribution, licenses, support tickets, user access, and IT infrastructure.
 
-## 🚀 المميزات
+## 🚀 Features
 
-- ✅ إدارة البرامج والرخص
-- ✅ نظام الدعم الفني (Tickets)
-- ✅ الاشتراكات والفواتير
-- ✅ إدارة المستخدمين والمجموعات
-- ✅ بريد إلكتروني تلقائي مع المرفقات
-- ✅ تحديثات تلقائية للموقع مع كشف التعديلات
-- ✅ دعم ثنائي اللغة (عربي/إنجليزي) مع RTL
-- ✅ تشغيل صوت تلقائي عند تغيير اللغة
-- ✅ WireGuard VPN مع QR codes
-- ✅ لوحة تحكم متقدمة
+- ✅ Software Management & Distribution - Manage downloads with tiered pricing
+- ✅ License Management - Track and manage software licenses with expiration alerts
+- ✅ Support Ticketing System - Create, assign, and resolve technical support tickets
+- ✅ SaaS Subscription Plans - Basic, Standard, and Professional tiers with billing
+- ✅ User & Group Management - Role-based access control (Admin/Client) with organizational groups
+- ✅ Invoice & Financial Management - Automatic invoice generation and billing tracking
+- ✅ Email Notifications - Automated email system with attachments using Nodemailer
+- ✅ Auto-Update Detection - Automatic change detection with update tracking
+- ✅ Bilingual Interface - Full English/Arabic support with RTL/LTR rendering
+- ✅ WireGuard VPN - VPN configuration with QR code generation
+- ✅ IT Infrastructure Management - Networks, Firewall, and VPN configuration tracking
+- ✅ User Authentication - Passport.js with OpenID Connect & local strategies
+- ✅ Activity Logging - Comprehensive audit trail of system activities
+- ✅ Advanced Dashboard - Analytics and role-based dashboards
+- ✅ Password Management - Secure password reset and recovery flows
+- ✅ Developer API - RESTful API for integrations
 
-## 📋 متطلبات التشغيل
+## 📋 Requirements
 
-- Node.js 18+
-- PostgreSQL 13+
-- npm أو yarn
+- Node.js 18 or higher
+- PostgreSQL 13 or higher (Neon PostgreSQL supported)
+- npm or yarn package manager
+- Modern web browser with JavaScript enabled
 
-## 🛠️ التثبيت والتشغيل
+## 🛠️ Installation & Setup
 
-### خطوة 1: استنساخ المشروع
+### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/yourusername/it-service-portal.git
-cd it-service-portal
+git clone https://github.com/Riydx0/portal-RH2.git
+cd portal-RH2
 ```
 
-### خطوة 2: تثبيت الـ dependencies
+### Step 2: Install Dependencies
 ```bash
 npm install
 ```
 
-### خطوة 3: إعداد متغيرات البيئة
-أنشئ ملف `.env` مع:
+### Step 3: Configure Environment Variables
+Create a `.env` file with the following variables:
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/it_portal
-SESSION_SECRET=your-secret-key-here
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/portal_db
+PGHOST=localhost
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=password
+PGDATABASE=portal_db
+
+# Session & Security
+SESSION_SECRET=your-secure-random-string-here
 NODE_ENV=development
+
+# Email Configuration (Optional - for Nodemailer)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM=noreply@yourcompany.com
 SMTP_SECURE=false
+
+# Application
+VITE_APP_NAME=IT Service Portal
+VITE_APP_URL=http://localhost:5000
 ```
 
-### خطوة 4: إنشاء قاعدة البيانات
+### Step 4: Setup Database
 ```bash
 npm run db:push
 ```
 
-### خطوة 5: تشغيل التطبيق
+### Step 5: Create Admin User (Optional)
+```bash
+npm run create-admin
+```
+
+### Step 6: Start Development Server
 ```bash
 npm run dev
 ```
 
-التطبيق سيعمل على: `http://localhost:5000`
+The application will be available at: `http://localhost:5000`
 
-## 🔐 بيانات الدخول الافتراضية
+## 🔐 Default Credentials
+
+**Admin Account:**
+- Email: admin@portal
+- Password: admin
+- Username: Admin
+
+**Client Account:**
+- Email: client@test.com
+- Password: client123
+
+⚠️ **IMPORTANT:** Change these credentials immediately in production!
+
+## 📁 Project Structure
 
 ```
-Admin:
-  Email: admin@test.com
-  Password: Admin@12345
-
-Client:
-  Email: client@test.com
-  Password: Client@12345
-```
-
-## 📁 هيكل المشروع
-
-```
-├── client/                 # تطبيق React (Frontend)
+├── client/                      # React Frontend
 │   ├── src/
-│   │   ├── pages/         # صفحات التطبيق
-│   │   ├── components/    # مكونات React
-│   │   └── lib/           # دوال مساعدة
-├── server/                # Express Backend
-│   ├── routes.ts          # جميع الـ API endpoints
-│   ├── storage.ts         # طبقة قاعدة البيانات
-│   ├── auth.ts            # التحقق والمصادقة
-│   └── email.ts           # نظام البريد الإلكتروني
-├── shared/                # كود مشترك
-│   └── schema.ts          # نماذج Drizzle ORM
-└── package.json           # الـ dependencies
+│   │   ├── pages/             # Application pages
+│   │   ├── components/        # React components
+│   │   ├── lib/               # Utility functions
+│   │   ├── hooks/             # Custom React hooks
+│   │   └── index.css           # Global styles
+│   └── index.html
+│
+├── server/                      # Express Backend
+│   ├── routes.ts              # API endpoints
+│   ├── storage.ts             # Database layer
+│   ├── auth.ts                # Authentication logic
+│   ├── email.ts               # Email service
+│   ├── wireguard.ts           # WireGuard VPN config
+│   ├── app.ts                 # Express app setup
+│   └── db.ts                  # Database connection
+│
+├── shared/                      # Shared Code
+│   └── schema.ts              # Drizzle ORM schema
+│
+├── migrations/                  # Database migrations
+├── design_guidelines.md         # UI/UX design system
+├── tailwind.config.ts          # Tailwind CSS config
+├── vite.config.ts              # Vite build config
+├── drizzle.config.ts           # Drizzle ORM config
+├── package.json                # Dependencies
+└── tsconfig.json               # TypeScript config
 ```
 
-## 🔄 سير العمل مع GitHub
+## 🔄 Git Workflow
 
-### للتعديلات والتحديثات المستقبلية:
-
-#### 1️⃣ الخطوة الأولى (للمرة الأولى فقط):
+### First Time Setup
 ```bash
-# إنشاء repository على GitHub
-# ثم في جهازك:
-git remote add origin https://github.com/yourusername/it-service-portal.git
+git remote add origin https://github.com/Riydx0/portal-RH2.git
 git branch -M main
 git push -u origin main
 ```
 
-#### 2️⃣ عملية التطوير المستمرة:
+### Development Workflow
 
-**عند البدء بتعديل جديد:**
+**Start new feature:**
 ```bash
-# تحديث الكود من GitHub
 git pull origin main
-
-# إنشاء branch جديد للتعديل
-git checkout -b feature/new-feature
+git checkout -b feature/your-feature-name
 ```
 
-**بعد الانتهاء من التعديل:**
+**Commit changes:**
 ```bash
-# إضافة الملفات المعدلة
 git add .
-
-# حفظ التغييرات مع وصف واضح
-git commit -m "feat: إضافة ميزة جديدة"
-
-# رفع التغييرات
-git push origin feature/new-feature
+git commit -m "feat: description of your changes"
+git push origin feature/your-feature-name
 ```
 
-**ثم عمل merge إلى main:**
+**Merge to main:**
 ```bash
-# العودة للـ main branch
 git checkout main
-
-# دمج التعديلات
-git merge feature/new-feature
-
-# رفع النسخة النهائية
+git pull origin main
+git merge feature/your-feature-name
 git push origin main
 ```
 
-#### 3️⃣ التحديث المباشر (بدون branches):
-إذا كنت تريد تحديثاً سريعاً مباشرة:
+**Direct update to main:**
 ```bash
 git add .
-git commit -m "update: رسالة التحديث"
+git commit -m "update: description"
 git push origin main
 ```
 
-## 🚀 نشر على Cloudron
+## 🚀 Deployment on Cloudron
 
-### خطوات النشر:
+### Prerequisites
+- Cloudron-compatible Linux server
+- GitHub repository access
+- GitHub Personal Access Token
 
-1. **إنشاء ملف `cloudron.json`** - سيتم توفيره لاحقاً
-2. **ربط GitHub بـ Cloudron** - استخدم GitHub Personal Access Token
-3. **تفعيل Automatic Deploys** - التطبيق سيتحدث تلقائياً عند Push على main
+### Deployment Steps
 
-### بدء التطوير مع Cloudron:
+1. **Create `cloudron.json`:**
+```json
+{
+  "version": "1.0.0",
+  "title": "IT Service Portal",
+  "description": "Comprehensive IT Service Management Portal",
+  "tagline": "Centralized IT Services Platform",
+  "author": "Your Name",
+  "website": "https://github.com/Riydx0/portal-RH2",
+  "contactEmail": "your-email@example.com",
+  "icon": "file://icon.png",
+  "postInstallMessage": "Thank you for installing IT Service Portal!"
+}
+```
+
+2. **Connect GitHub to Cloudron:**
+   - Go to Cloudron Dashboard → Apps → Install Custom App
+   - Provide GitHub repository URL
+   - Authenticate with your GitHub Personal Access Token
+   - Configure environment variables
+
+3. **Enable Auto-Deployment:**
+   - Push changes to GitHub `main` branch
+   - Cloudron will automatically build and deploy
+
+4. **Set Environment Variables on Cloudron:**
+   - Navigate to App Settings
+   - Configure all `.env` variables
+   - Restart the application
+
+## 📊 Database Schema
+
+### Key Tables
+
+**Users**
+- id, email, username, password_hash, role (admin/client), created_at
+
+**Subscription Plans**
+- id, name, price, features, billing_cycle
+
+**Software**
+- id, name, category_id, version, file_path, price
+
+**Licenses**
+- id, software_id, user_id, license_key, expiry_date, status
+
+**Support Tickets**
+- id, user_id, title, description, status, priority, created_at
+
+**Invoices**
+- id, user_id, amount, due_date, status, items
+
+**IT Infrastructure**
+- Networks, VPN Configurations, Firewall Rules
+
+## 🔍 Key Features Explained
+
+### SaaS Subscription Model
+Users can subscribe to one of three tiers:
+- **Basic Plan ($29/month):** Core features
+- **Standard Plan ($79/month):** Additional features + priority support
+- **Professional Plan ($199/month):** All features + dedicated support
+
+### Role-Based Access Control
+- **Admin:** Full access to all system features and settings
+- **Client:** Access to personal subscriptions, tickets, and licenses
+
+### WireGuard VPN Integration
+- Generate secure VPN configurations
+- QR code generation for easy mobile setup
+- Track active VPN connections
+
+### Automated Notifications
+- Email alerts for ticket updates
+- Invoice delivery and reminders
+- License expiration warnings
+- System event notifications
+
+### Update Detection
+- Automatic detection of database changes
+- Notification of new software additions
+- Tracking of user profile updates
+- Audit log of all modifications
+
+## ⚠️ Important Notes
+
+### Files NOT Tracked by Git
+These files are in `.gitignore` and won't be pushed:
+- `.env` - Environment secrets ❌
+- `node_modules/` - Dependencies (reinstalled via npm install)
+- `dist/` - Build output (regenerated on build)
+- `uploads/` - User uploaded files
+- `*.log` - Log files
+
+### Files REQUIRED for Repository
+- `package.json` - All dependencies defined here
+- `VERSION` - Current version number
+- `.gitignore` - Files to exclude from git
+- `README.md` - Project documentation
+- Database schema in `shared/schema.ts`
+
+### Security Best Practices
+1. Never commit `.env` files
+2. Use environment variables for all secrets
+3. Rotate `SESSION_SECRET` regularly
+4. Enable HTTPS in production
+5. Keep dependencies up to date: `npm audit fix`
+6. Use strong passwords for admin accounts
+7. Enable Two-Factor Authentication when available
+
+## 🔧 Available Scripts
 
 ```bash
-# عمل clone محلي
-git clone https://github.com/yourusername/it-service-portal.git
+# Development
+npm run dev              # Start development server
 
-# عمل التعديلات
-# ...
+# Database
+npm run db:push         # Sync database schema
+npm run db:studio       # Open Drizzle Studio
+npm run db:migrate      # Run migrations
 
-# الرفع على GitHub
-git push origin main
+# Admin Setup
+npm run create-admin    # Create admin user
+npm run fix-admin-password  # Reset admin password
 
-# Cloudron سيقوم بالـ deployment تلقائياً
+# Production
+npm run build           # Build production bundle
+npm start              # Start production server
 ```
 
-## 📝 ملاحظات مهمة
+## 📞 Support & Issues
 
-### ملفات **لا تُرفع** على GitHub:
-- `.env` - متغيرات البيئة السرية ❌
-- `node_modules/` - المكتبات ✅ (يتم تثبيتها تلقائياً)
-- `dist/` - الملفات المُترجمة ✅ (تُبنى تلقائياً)
-- `uploads/` - ملفات الـ upload المحلية ✅
+For bugs, feature requests, or questions:
+1. Check existing [GitHub Issues](https://github.com/Riydx0/portal-RH2/issues)
+2. Create a new issue with detailed description
+3. Include error logs and reproduction steps
+4. Contact: support@yourcompany.com
 
-### ملفات **مهمة جداً** للـ repository:
-- `package.json` - قائمة الـ dependencies ✅
-- `VERSION` - رقم النسخة الحالي (v0.1.0)
-- `.gitignore` - ملفات التجاهل
-- `README.md` - هذا الملف
+## 🤝 Contributing
 
-## 🔍 التحقق من التحديثات
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-داخل التطبيق، اذهب إلى:
-- **Admin Panel** → **Updates** → اضغط **"Check for updates"**
+## 📄 License
 
-النظام سيكتشف تلقائياً:
-- ✅ هل تم تعديل البيانات؟
-- ✅ هل تم إضافة برامج/مستخدمين جدد؟
-- ✅ حالة آخر تحديث
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 📞 التواصل والدعم
+## 🏢 Tech Stack
 
-للمساعدة أو الأسئلة:
-- اذهب إلى صفحة **Issues** في GitHub
-- أو راسل مباشرة عبر البريد الإلكتروني
+**Frontend:**
+- React 18
+- TypeScript
+- Vite
+- TailwindCSS
+- Shadcn/UI
+- TanStack Query
+- Wouter (Routing)
 
-## 📄 الترخيص
+**Backend:**
+- Node.js with Express
+- TypeScript
+- Passport.js (Authentication)
+- Drizzle ORM
+- PostgreSQL
 
-هذا المشروع مرخص تحت MIT License
+**Infrastructure:**
+- Neon PostgreSQL (Serverless)
+- Nodemailer (Email)
+- WireGuard VPN
+
+## 📈 Roadmap
+
+- [ ] Advanced reporting and analytics
+- [ ] Mobile app (iOS/Android)
+- [ ] Integration with external ticketing systems
+- [ ] Multi-tenant support
+- [ ] Advanced security features (2FA, SSO)
+- [ ] Custom branding and white-label options
+- [ ] API rate limiting and usage tracking
+- [ ] Advanced backup and disaster recovery
+
+## 👨‍💻 Author
+
+**Riydx0** - [GitHub Profile](https://github.com/Riydx0)
 
 ---
 
-**آخر تحديث:** November 26, 2025  
-**الإصدار الحالي:** v0.1.0
-# portal-RH2
+**Last Updated:** November 27, 2025  
+**Current Version:** v0.1.0  
+**Status:** Active Development
