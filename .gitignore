@@ -48,4 +48,5 @@ temp/
 migrations/
 
 # Session store (if local)
-sessions.db
+sessions.dbuploads/
+uploads/
