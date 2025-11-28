@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# IT Service Portal - Complete Auto-Setup
-# Cloudron-Style: One command does everything!
-#
+# IT Service Portal - One Command Setup
 # Usage:
 #   wget https://raw.githubusercontent.com/Riydx0/portal-RH2/main/portal-setup
 #   chmod +x portal-setup
@@ -13,31 +11,25 @@ set -e
 echo ""
 echo "╔════════════════════════════════════════════╗"
 echo "║  🚀 IT Service Portal - Complete Setup     ║"
-echo "║                                            ║"
-echo "║  Cloudron-Style Auto Installation         ║"
-echo "║  Node.js + PostgreSQL + App               ║"
 echo "╚════════════════════════════════════════════╝"
 echo ""
 
-# Check if running as root
+# Check root
 if [ "$EUID" -ne 0 ]; then
-    echo "⚠️  Please run with sudo:"
-    echo "   sudo ./portal-setup"
+    echo "⚠️  Run with sudo: sudo ./portal-setup"
     exit 1
 fi
 
-# Get actual user (not root)
 ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
-INSTALL_PATH="${ACTUAL_HOME}/portal"
+INSTALL_PATH="/home/$ACTUAL_USER/portal"
+if [ "$ACTUAL_USER" = "root" ]; then
+    INSTALL_PATH="/root/portal"
+fi
 
 echo "📍 Installing to: $INSTALL_PATH"
-echo "👤 User: $ACTUAL_USER"
 echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 1: Install Node.js if needed
-# ═══════════════════════════════════════════════
+# Step 1: Node.js
 echo "🔍 Checking Node.js..."
 if ! command -v node &> /dev/null; then
     echo "📥 Installing Node.js 20..."
@@ -45,204 +37,71 @@ if ! command -v node &> /dev/null; then
     apt-get install -y nodejs
 fi
 echo "✅ Node.js $(node -v)"
-echo "✅ npm $(npm -v)"
-echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 2: Install PostgreSQL if needed
-# ═══════════════════════════════════════════════
+# Step 2: PostgreSQL
 echo "🔍 Checking PostgreSQL..."
-if ! command -v psql &> /dev/null; then
-    echo "📥 Installing PostgreSQL..."
-    apt-get update
-    apt-get install -y postgresql postgresql-contrib
-fi
-
-# Start PostgreSQL
+apt-get update -qq
+apt-get install -y postgresql postgresql-contrib git
 systemctl enable postgresql
 systemctl start postgresql
 echo "✅ PostgreSQL installed"
-echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 3: Create Database
-# ═══════════════════════════════════════════════
-echo "📊 Setting up database..."
-
-DB_NAME="portal_db"
-DB_USER="portal_user"
-DB_PASS=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
-
-# Create user and database
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
-sudo -u postgres psql -c "DROP USER IF EXISTS $DB_USER;" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-
-DATABASE_URL="postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME"
+# Step 3: Create Database
+echo "📊 Creating database..."
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS portal_db;" 2>/dev/null || true
+sudo -u postgres psql -c "DROP USER IF EXISTS portal_user;" 2>/dev/null || true
+sudo -u postgres psql -c "CREATE USER portal_user WITH PASSWORD 'portal123';"
+sudo -u postgres psql -c "CREATE DATABASE portal_db OWNER portal_user;"
 echo "✅ Database created"
-echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 4: Install Git if needed
-# ═══════════════════════════════════════════════
-echo "🔍 Checking Git..."
-if ! command -v git &> /dev/null; then
-    echo "📥 Installing Git..."
-    apt-get install -y git
-fi
-echo "✅ Git $(git --version | cut -d' ' -f3)"
-echo ""
-
-# ═══════════════════════════════════════════════
-# STEP 5: Clone Repository
-# ═══════════════════════════════════════════════
-echo "📥 Downloading IT Service Portal..."
-
-# Remove old installation
+# Step 4: Clone
+echo "📥 Downloading portal..."
 rm -rf "$INSTALL_PATH"
-mkdir -p "$INSTALL_PATH"
-
-# Clone
 git clone https://github.com/Riydx0/portal-RH2.git "$INSTALL_PATH"
-chown -R $ACTUAL_USER:$ACTUAL_USER "$INSTALL_PATH"
+echo "✅ Downloaded"
 
-echo "✅ Repository cloned"
-echo ""
-
-# ═══════════════════════════════════════════════
-# STEP 6: Create .env file
-# ═══════════════════════════════════════════════
-echo "🔧 Creating configuration..."
-
-SESSION_SECRET=$(openssl rand -base64 32)
-
-cat > "$INSTALL_PATH/.env" << EOF
-# Database
-DATABASE_URL=$DATABASE_URL
-PGHOST=localhost
-PGPORT=5432
-PGUSER=$DB_USER
-PGPASSWORD=$DB_PASS
-PGDATABASE=$DB_NAME
-
-# Session & Security
-SESSION_SECRET=$SESSION_SECRET
+# Step 5: Create .env
+echo "🔧 Creating config..."
+cat > "$INSTALL_PATH/.env" << 'EOF'
+DATABASE_URL=postgresql://portal_user:portal123@localhost:5432/portal_db
+SESSION_SECRET=supersecretkey123456789abcdef
 NODE_ENV=production
-
-# Application
-VITE_APP_NAME=IT Service Portal
-VITE_APP_URL=http://localhost:5000
 EOF
+echo "✅ Config created"
 
-chown $ACTUAL_USER:$ACTUAL_USER "$INSTALL_PATH/.env"
-echo "✅ Configuration created"
-echo ""
-
-# ═══════════════════════════════════════════════
-# STEP 7: Install Dependencies
-# ═══════════════════════════════════════════════
-echo "📦 Installing dependencies (this may take 3-5 minutes)..."
+# Step 6: Install
+echo "📦 Installing dependencies..."
 cd "$INSTALL_PATH"
-sudo -u $ACTUAL_USER npm install > /tmp/npm_install.log 2>&1 || {
-    echo "❌ npm install failed"
-    tail -20 /tmp/npm_install.log
-    exit 1
-}
+npm install --production > /dev/null 2>&1
 echo "✅ Dependencies installed"
-echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 8: Build
-# ═══════════════════════════════════════════════
-echo "🔨 Building project..."
-sudo -u $ACTUAL_USER npm run build > /tmp/npm_build.log 2>&1 || {
-    echo "❌ Build failed"
-    tail -20 /tmp/npm_build.log
-    exit 1
-}
-echo "✅ Build complete"
-echo ""
+# Step 7: Build
+echo "🔨 Building..."
+npm run build > /dev/null 2>&1
+echo "✅ Built"
 
-# ═══════════════════════════════════════════════
-# STEP 9: Database Migration
-# ═══════════════════════════════════════════════
-echo "📊 Migrating database..."
-cd "$INSTALL_PATH"
-sudo -u $ACTUAL_USER bash -c "export DATABASE_URL='$DATABASE_URL' && npm run db:push" > /tmp/npm_db.log 2>&1 || {
-    echo "❌ Database migration failed"
-    tail -20 /tmp/npm_db.log
-    exit 1
-}
+# Step 8: Database
+echo "📊 Setting up database..."
+npm run db:push > /dev/null 2>&1
 echo "✅ Database ready"
-echo ""
 
-# ═══════════════════════════════════════════════
-# STEP 10: Create Systemd Service
-# ═══════════════════════════════════════════════
-echo "⚙️  Creating system service..."
+# Step 9: Firewall
+echo "🔥 Opening port 5000..."
+ufw allow 5000 2>/dev/null || true
 
-cat > /etc/systemd/system/portal.service << EOF
-[Unit]
-Description=IT Service Portal
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-User=$ACTUAL_USER
-WorkingDirectory=$INSTALL_PATH
-ExecStart=/usr/bin/npm run dev
-Restart=on-failure
-RestartSec=10
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable portal
-echo "✅ System service created"
-echo ""
-
-# ═══════════════════════════════════════════════
-# DONE!
-# ═══════════════════════════════════════════════
 echo ""
 echo "╔════════════════════════════════════════════╗"
 echo "║          ✅ SETUP COMPLETE!               ║"
 echo "╚════════════════════════════════════════════╝"
 echo ""
-echo "📍 Installation: $INSTALL_PATH"
-echo ""
-echo "▶️  START THE APPLICATION:"
-echo "   sudo systemctl start portal"
-echo ""
-echo "   Or manually:"
+echo "▶️  START:"
 echo "   cd $INSTALL_PATH && npm run dev"
 echo ""
-echo "🌐 OPEN IN BROWSER:"
+echo "🌐 OPEN:"
 echo "   http://YOUR_SERVER_IP:5000"
 echo ""
-echo "👤 LOGIN WITH:"
-echo "   Email:    admin@portal"
+echo "👤 LOGIN:"
+echo "   Email: admin@portal"
 echo "   Password: admin"
 echo ""
-echo "📊 DATABASE INFO:"
-echo "   User: $DB_USER"
-echo "   Pass: $DB_PASS"
-echo "   Name: $DB_NAME"
-echo ""
-echo "⚠️  IMPORTANT:"
-echo "   • Change admin password immediately!"
-echo "   • Save database credentials above!"
-echo ""
-echo "📚 Commands:"
-echo "   Start:   sudo systemctl start portal"
-echo "   Stop:    sudo systemctl stop portal"
-echo "   Status:  sudo systemctl status portal"
-echo "   Logs:    journalctl -u portal -f"
-echo ""
 echo "════════════════════════════════════════════"
-echo ""
