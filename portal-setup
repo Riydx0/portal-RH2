@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# IT Service Portal - Cloudron Style Installation
+# استخدام:
+#   wget https://raw.githubusercontent.com/Riydx0/portal-RH2/main/portal-setup
+#   chmod +x portal-setup
+#   ./portal-setup
+
+set -e
+
+echo ""
+echo "╔════════════════════════════════════════════╗"
+echo "║  🚀 IT Service Portal - Setup              ║"
+echo "║                                            ║"
+echo "║  Similar to: Cloudron, Umbrel, Yunohost   ║"
+echo "╚════════════════════════════════════════════╝"
+echo ""
+
+# Check Node.js
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js is required but not installed"
+    echo ""
+    echo "Install Node.js 20+ first:"
+    echo "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+    echo "  sudo apt install -y nodejs"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Node.js $(node -v)"
+echo ""
+
+# Create installation directory
+INSTALL_PATH="${HOME}/portal"
+
+if [ -d "$INSTALL_PATH" ]; then
+    echo "⚠️  Directory exists: $INSTALL_PATH"
+    read -p "Continue and overwrite? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+    rm -rf "$INSTALL_PATH"
+fi
+
+mkdir -p "$INSTALL_PATH"
+cd "$INSTALL_PATH"
+
+echo "📥 Downloading portal (this may take a minute)..."
+echo ""
+
+# Download as ZIP
+if ! wget -q --show-progress https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip; then
+    echo "❌ Failed to download. Check internet connection."
+    exit 1
+fi
+
+echo ""
+echo "📂 Extracting files..."
+unzip -q main.zip
+rm main.zip
+
+# Move extracted files
+if [ -d "portal-RH2-main" ]; then
+    mv portal-RH2-main/* .
+    rmdir portal-RH2-main
+fi
+
+echo ""
+echo "📦 Installing dependencies (this may take several minutes)..."
+npm install --production
+
+echo ""
+echo "🔨 Building project..."
+npm run build
+
+echo ""
+echo "📊 Setting up database..."
+npm run db:push
+
+echo ""
+echo "╔════════════════════════════════════════════╗"
+echo "║          ✅ SETUP COMPLETE!               ║"
+echo "╚════════════════════════════════════════════╝"
+echo ""
+echo "📍 Installation: $INSTALL_PATH"
+echo ""
+echo "▶️  START THE APPLICATION:"
+echo "   cd $INSTALL_PATH"
+echo "   npm run dev"
+echo ""
+echo "🌐 THEN OPEN IN BROWSER:"
+echo "   http://localhost:5000"
+echo ""
+echo "👤 LOGIN WITH:"
+echo "   Email:    admin@portal"
+echo "   Password: admin"
+echo ""
+echo "⚠️  IMPORTANT:"
+echo "   • Change admin password immediately"
+echo "   • Configure email settings in Admin Panel"
+echo "   • For production: Set NODE_ENV=production"
+echo ""
+echo "📚 Documentation:"
+echo "   https://github.com/Riydx0/portal-RH2"
+echo ""
+echo "════════════════════════════════════════════"
+echo ""
