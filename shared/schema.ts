@@ -1,4 +1,4 @@
-import { sql, relations } from "drizzle-orm";
+يimport { sql, relations } from "drizzle-orm";
 import {
   pgTable,
   text,
