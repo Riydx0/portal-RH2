@@ -51,27 +51,27 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {logoUrl ? (
-              <img
-                src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
-                alt="Logo"
-                className="h-10 w-10 object-contain"
-              />
-            ) : (
-              <Server className="h-10 w-10 text-primary" />
-            )}
-            <CardTitle className="text-3xl font-semibold">{loginTitle}</CardTitle>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
+      <div className="w-full max-w-md space-y-4">
+        <div className="flex flex-col items-center justify-center gap-3 mb-6">
+          {logoUrl ? (
+            <img
+              src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
+              alt="Logo"
+              className="h-16 w-16 object-contain"
+            />
+          ) : (
+            <Server className="h-16 w-16 text-primary" />
+          )}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold">{loginTitle}</h1>
+            <p className="text-muted-foreground text-base mt-2">{loginDescription}</p>
           </div>
-          <CardDescription className="text-base">
-            {loginDescription}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!isRegister ? (
+        </div>
+
+        <Card className="w-full">
+          <CardContent className="space-y-4 pt-6">
+            {!isRegister ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">{t('email', lang)}</Label>
@@ -233,9 +233,10 @@ export default function AuthPage() {
                 </button>
               </p>
             </form>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
