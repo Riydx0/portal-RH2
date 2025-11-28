@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # IT Service Portal - Cloudron Style Installation
-# استخدام:
+# One-command setup for Linux servers
+#
+# Usage:
 #   wget https://raw.githubusercontent.com/Riydx0/portal-RH2/main/portal-setup
 #   chmod +x portal-setup
 #   ./portal-setup
@@ -12,7 +14,7 @@ echo ""
 echo "╔════════════════════════════════════════════╗"
 echo "║  🚀 IT Service Portal - Setup              ║"
 echo "║                                            ║"
-echo "║  Similar to: Cloudron, Umbrel, Yunohost   ║"
+echo "║  One-Command Cloudron-Style Installation  ║"
 echo "╚════════════════════════════════════════════╝"
 echo ""
 
@@ -28,6 +30,15 @@ if ! command -v node &> /dev/null; then
 fi
 
 echo "✅ Node.js $(node -v)"
+echo ""
+
+# Check npm
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm not found"
+    exit 1
+fi
+
+echo "✅ npm $(npm -v)"
 echo ""
 
 # Create installation directory
@@ -46,19 +57,49 @@ fi
 mkdir -p "$INSTALL_PATH"
 cd "$INSTALL_PATH"
 
-echo "📥 Downloading portal (this may take a minute)..."
+echo "📥 Downloading portal from GitHub..."
 echo ""
 
-# Download as ZIP
-if ! wget -q --show-progress https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip; then
+# Download - try curl first, then wget
+DOWNLOAD_OK=false
+
+if command -v curl &> /dev/null; then
+    if curl -L -o main.zip https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip 2>/dev/null; then
+        DOWNLOAD_OK=true
+    fi
+fi
+
+if [ "$DOWNLOAD_OK" = false ] && command -v wget &> /dev/null; then
+    if wget -q --show-progress https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip -O main.zip; then
+        DOWNLOAD_OK=true
+    fi
+fi
+
+if [ "$DOWNLOAD_OK" = false ]; then
     echo "❌ Failed to download. Check internet connection."
+    echo ""
+    echo "Try manual download:"
+    echo "  cd $INSTALL_PATH"
+    echo "  wget https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip"
+    echo "  unzip main.zip"
+    echo "  mv portal-RH2-main/* ."
+    echo "  rm -rf portal-RH2-main main.zip"
     exit 1
 fi
 
 echo ""
+echo "✅ Download complete"
+echo ""
+
+# Verify ZIP
+if ! unzip -t main.zip > /dev/null 2>&1; then
+    echo "❌ ZIP file is corrupted"
+    rm -f main.zip
+    exit 1
+fi
+
 echo "📂 Extracting files..."
 unzip -q main.zip
-rm main.zip
 
 # Move extracted files
 if [ -d "portal-RH2-main" ]; then
@@ -66,19 +107,40 @@ if [ -d "portal-RH2-main" ]; then
     rmdir portal-RH2-main
 fi
 
+rm -f main.zip
+
+# Verify we have package.json
+if [ ! -f "package.json" ]; then
+    echo "❌ Installation failed - package.json not found"
+    exit 1
+fi
+
+echo "✅ Files extracted"
 echo ""
-echo "📦 Installing dependencies (this may take several minutes)..."
-npm install --production
+
+echo "📦 Installing dependencies..."
+echo "   (This may take 3-5 minutes...)"
+echo ""
+npm install --production 2>&1 | tail -20
 
 echo ""
+echo "✅ Dependencies installed"
+echo ""
+
 echo "🔨 Building project..."
-npm run build
+npm run build 2>&1 | tail -10
 
 echo ""
+echo "✅ Build complete"
+echo ""
+
 echo "📊 Setting up database..."
-npm run db:push
+npm run db:push 2>&1 | tail -10
 
 echo ""
+echo "✅ Database ready"
+echo ""
+
 echo "╔════════════════════════════════════════════╗"
 echo "║          ✅ SETUP COMPLETE!               ║"
 echo "╚════════════════════════════════════════════╝"
@@ -101,8 +163,7 @@ echo "   • Change admin password immediately"
 echo "   • Configure email settings in Admin Panel"
 echo "   • For production: Set NODE_ENV=production"
 echo ""
-echo "📚 Documentation:"
-echo "   https://github.com/Riydx0/portal-RH2"
+echo "📚 GitHub: https://github.com/Riydx0/portal-RH2"
 echo ""
 echo "════════════════════════════════════════════"
 echo ""
