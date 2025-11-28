@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage, t } from "@/lib/i18n";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -51,10 +52,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
+type SettingsData = Record<string, string>;
+
 export function AppSidebar() {
   const { user, logoutMutation } = useAuth();
   const { lang } = useLanguage();
   const [location] = useLocation();
+  const { data: settings } = useQuery<SettingsData>({
+    queryKey: ["/api/settings"],
+  });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [resourceOpen, setResourceOpen] = useState(false);
@@ -282,16 +288,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-6">
+      <SidebarHeader className="p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-10 w-10 rounded-md bg-primary">
-            <Server className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">IT Portal</h2>
-            <p className="text-xs text-muted-foreground">Service Management</p>
+          {settings?.logo_url ? (
+            <img
+              src={settings.logo_url.startsWith("/api/") ? settings.logo_url : `/api/download/${settings.logo_url}`}
+              alt="Logo"
+              className="h-8 w-8 object-contain"
+            />
+          ) : (
+            <Server className="h-8 w-8 text-primary" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold truncate">{settings?.login_title || "IT Portal"}</h2>
           </div>
         </div>
+        <Separator />
       </SidebarHeader>
 
       <SidebarContent className="space-y-0">

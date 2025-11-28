@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -10,6 +10,9 @@ import { NotificationsButton } from "@/components/notifications-button";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useLanguage, initLanguage, type Language } from "@/lib/i18n";
+import { Server } from "lucide-react";
+
+type SettingsData = Record<string, string>;
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import ShareDownloadPage from "@/pages/share-download-page";
@@ -104,6 +107,9 @@ function AppContent() {
   const { lang } = useLanguage();
   const [location] = useLocation();
   const previousLangRef = useRef<Language | null>(null);
+  const { data: settings } = useQuery<SettingsData>({
+    queryKey: ["/api/settings"],
+  });
 
   useEffect(() => {
     if (lang === 'ar') {
@@ -147,7 +153,18 @@ function AppContent() {
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="flex items-center justify-between p-2 border-b bg-background gap-2 px-4">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <div className="flex-1" />
+            <div className="flex items-center gap-2 flex-1">
+              {settings?.logo_url && (
+                <img
+                  src={settings.logo_url.startsWith("/api/") ? settings.logo_url : `/api/download/${settings.logo_url}`}
+                  alt="Logo"
+                  className="h-6 w-6 object-contain"
+                />
+              )}
+              {settings?.login_title && (
+                <span className="text-sm font-medium text-muted-foreground">{settings.login_title}</span>
+              )}
+            </div>
             <NotificationsButton />
           </header>
           <main className="flex-1 overflow-auto">

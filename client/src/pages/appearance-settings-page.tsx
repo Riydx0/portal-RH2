@@ -47,29 +47,49 @@ export default function AppearanceSettingsPage() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file (PNG, JPG, GIF, WebP, or SVG)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setSelectedLogo(file);
       
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        const img = new Image();
+        const img = new window.Image();
+        
         img.onload = () => {
           setLogoPreview({
-            width: img.width,
-            height: img.height,
+            width: img.naturalWidth,
+            height: img.naturalHeight,
             size: file.size,
             dataUrl: dataUrl,
           });
         };
+        
         img.onerror = () => {
+          console.error("Failed to load image");
           toast({
             title: "Error",
             description: "Failed to load image. Please check the file format.",
             variant: "destructive",
           });
         };
-        img.src = dataUrl;
+        
+        // Use a small timeout to ensure image loads
+        setTimeout(() => {
+          img.src = dataUrl;
+        }, 0);
       };
+      
       reader.onerror = () => {
         toast({
           title: "Error",
@@ -77,6 +97,7 @@ export default function AppearanceSettingsPage() {
           variant: "destructive",
         });
       };
+      
       reader.readAsDataURL(file);
     }
   };
