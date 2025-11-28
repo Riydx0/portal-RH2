@@ -127,6 +127,12 @@ export function AppSidebar() {
 
   const infrastructureItems = [
     {
+      title: isArabic ? "إعدادات الدومين" : "Domain & URL Settings",
+      url: "/domain-settings",
+      icon: Globe,
+      show: isAdmin,
+    },
+    {
       title: t('networks', lang),
       url: "/networks",
       icon: Wifi,

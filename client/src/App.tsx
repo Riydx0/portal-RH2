@@ -54,6 +54,7 @@ import ClientsPage from "@/pages/clients-page";
 import DevicesPage from "@/pages/devices-page";
 import MySubscriptionsPage from "@/pages/my-subscriptions-page";
 import UpdatesPage from "@/pages/updates-page";
+import DomainSettingsPage from "@/pages/domain-settings-page";
 
 function Router() {
   return (
@@ -97,6 +98,7 @@ function Router() {
       <ProtectedRoute path="/devices" component={DevicesPage} />
       <ProtectedRoute path="/my-subscriptions" component={MySubscriptionsPage} />
       <ProtectedRoute path="/updates" component={UpdatesPage} />
+      <ProtectedRoute path="/domain-settings" component={DomainSettingsPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route component={NotFound} />
     </Switch>
