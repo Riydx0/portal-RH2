@@ -12,6 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 
 type SettingsData = Record<string, string>;
 
+interface LogoPreview {
+  width: number;
+  height: number;
+  size: number;
+  dataUrl: string;
+}
+
 export default function AppearanceSettingsPage() {
   const { toast } = useToast();
   const [logoUrl, setLogoUrl] = useState("");
@@ -20,6 +27,7 @@ export default function AppearanceSettingsPage() {
   const [loginBgColor, setLoginBgColor] = useState("");
   const [enableRegistration, setEnableRegistration] = useState(true);
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<LogoPreview | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
   const { data: settings, isLoading } = useQuery<SettingsData>({
@@ -38,7 +46,23 @@ export default function AppearanceSettingsPage() {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedLogo(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedLogo(file);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          setLogoPreview({
+            width: img.width,
+            height: img.height,
+            size: file.size,
+            dataUrl: event.target?.result as string,
+          });
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -95,6 +119,7 @@ export default function AppearanceSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       setSelectedLogo(null);
+      setLogoPreview(null);
       toast({
         title: "Success",
         description: "Settings saved successfully",
@@ -150,7 +175,25 @@ export default function AppearanceSettingsPage() {
               )}
             </div>
 
-            {logoUrl && (
+            {selectedLogo && logoPreview && (
+              <div className="space-y-2">
+                <Label>New Logo Preview</Label>
+                <div className="p-4 border rounded-md bg-muted/50 flex flex-col items-center justify-center gap-3">
+                  <img
+                    src={logoPreview.dataUrl}
+                    alt="New logo preview"
+                    className="max-h-40 object-contain"
+                    data-testid="img-logo-preview-new"
+                  />
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p data-testid="text-logo-dimensions">Dimensions: {logoPreview.width}px × {logoPreview.height}px</p>
+                    <p data-testid="text-logo-size">File size: {(logoPreview.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {logoUrl && !selectedLogo && (
               <div className="space-y-2">
                 <Label>Current Logo Preview</Label>
                 <div className="p-4 border rounded-md bg-muted/50 flex items-center justify-center">
@@ -158,6 +201,7 @@ export default function AppearanceSettingsPage() {
                     src={logoUrl.startsWith("/api/") ? logoUrl : `/api/download/${logoUrl}`}
                     alt="Logo preview"
                     className="max-h-32 object-contain"
+                    data-testid="img-logo-preview-current"
                   />
                 </div>
               </div>
