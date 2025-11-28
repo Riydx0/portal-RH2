@@ -10,7 +10,16 @@ import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      name: string;
+      email: string;
+      username?: string;
+      password: string;
+      role: "admin" | "client";
+      createdAt: Date;
+      updatedAt: Date;
+    }
   }
 }
 

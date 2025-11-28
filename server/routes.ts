@@ -1320,7 +1320,7 @@ export function registerRoutes(app: Express): Server {
     try {
       let { title, description, priority } = req.body;
       
-      console.log("[Ticket] Received data:", { title, description, priority, userId: req.user.id });
+      console.log("[Ticket] Received data:", { title, description, priority, userId: req.user!.id });
       
       // Normalize priority
       priority = priority || "normal";
@@ -1347,13 +1347,13 @@ export function registerRoutes(app: Express): Server {
         priority = "normal";
       }
 
-      console.log("[Ticket] Inserting into DB with:", { title, description, priority, createdBy: req.user.id });
+      console.log("[Ticket] Inserting into DB with:", { title, description, priority, createdBy: req.user!.id });
       
       const ticket = await db.insert(tickets).values({
         title,
         description,
         priority: priority as any,
-        createdBy: req.user.id,
+        createdBy: req.user!.id,
         status: "open",
       }).returning();
       
@@ -1370,7 +1370,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/my-tickets", requireAuth, async (req, res) => {
     try {
       const userTickets = await db.query.tickets.findMany({
-        where: (table) => eq(table.createdBy, req.user.id),
+        where: (table) => eq(table.createdBy, req.user!.id),
       });
       res.json(userTickets);
     } catch (error: any) {
@@ -1385,7 +1385,7 @@ export function registerRoutes(app: Express): Server {
       const license = await db.insert(licenses).values({
         softwareId,
         licenseKey: "PENDING_" + Date.now(),
-        assignedTo: req.user.email,
+        assignedTo: req.user!.email,
         status: "available",
       }).returning();
       res.status(201).json(license[0]);
@@ -1397,7 +1397,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/my-licenses", requireAuth, async (req, res) => {
     try {
       const userLicenses = await db.query.licenses.findMany({
-        where: (table) => eq(table.assignedTo, req.user.email),
+        where: (table) => eq(table.assignedTo, req.user!.email),
       });
       res.json(userLicenses);
     } catch (error: any) {
@@ -1509,7 +1509,7 @@ export function registerRoutes(app: Express): Server {
       const keys = await db
         .select()
         .from(apiKeys)
-        .where(eq(apiKeys.userId, req.user.id))
+        .where(eq(apiKeys.userId, req.user!.id))
         .orderBy(desc(apiKeys.createdAt));
       
       res.json(keys.map(k => ({
@@ -1535,7 +1535,7 @@ export function registerRoutes(app: Express): Server {
           key,
           secret,
           name,
-          userId: req.user.id,
+          userId: req.user!.id,
           rateLimit: rateLimit || 1000,
           permissions: ["read", "write"],
         })
@@ -1556,7 +1556,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(apiKeys.id, keyId))
         .limit(1);
       
-      if (!apiKey.length || apiKey[0].userId !== req.user.id) {
+      if (!apiKey.length || apiKey[0].userId !== req.user!.id) {
         return res.status(403).send("Unauthorized");
       }
       
@@ -1576,7 +1576,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(apiKeys.id, keyId))
         .limit(1);
       
-      if (!apiKey.length || apiKey[0].userId !== req.user.id) {
+      if (!apiKey.length || apiKey[0].userId !== req.user!.id) {
         return res.status(403).send("Unauthorized");
       }
       
