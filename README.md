@@ -30,56 +30,51 @@ A comprehensive SaaS-enabled IT Service Management platform for managing softwar
 
 ## 🛠️ Installation & Setup
 
-### Step 1: Clone the Repository
+### ⚡ Quick Start (Recommended)
+
+The easiest way to get started on Linux:
+
+```bash
+git clone https://github.com/Riydx0/portal-RH2.git
+cd portal-RH2
+bash install.sh
+npm run dev
+```
+
+Done! Open `http://localhost:5000`
+
+For detailed instructions, see: **[LINUX_INSTALL.md](./LINUX_INSTALL.md)**
+
+---
+
+### Manual Installation
+
+#### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/Riydx0/portal-RH2.git
 cd portal-RH2
 ```
 
-### Step 2: Install Dependencies
+#### Step 2: Install Dependencies
 ```bash
 npm install
 ```
 
-### Step 3: Configure Environment Variables
-Create a `.env` file with the following variables:
-```
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/portal_db
-PGHOST=localhost
-PGPORT=5432
-PGUSER=postgres
-PGPASSWORD=password
-PGDATABASE=portal_db
-
-# Session & Security
-SESSION_SECRET=your-secure-random-string-here
-NODE_ENV=development
-
-# Email Configuration (Optional - for Nodemailer)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@yourcompany.com
-SMTP_SECURE=false
-
-# Application
-VITE_APP_NAME=IT Service Portal
-VITE_APP_URL=http://localhost:5000
+#### Step 3: Configure Environment Variables
+Create a `.env` file:
+```bash
+cp .env.example .env
+# Edit .env with your settings
 ```
 
-### Step 4: Setup Database
+Or let `install.sh` create it for you.
+
+#### Step 4: Setup Database
 ```bash
 npm run db:push
 ```
 
-### Step 5: Create Admin User (Optional)
-```bash
-npm run create-admin
-```
-
-### Step 6: Start Development Server
+#### Step 5: Start Development Server
 ```bash
 npm run dev
 ```
