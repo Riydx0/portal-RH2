@@ -146,6 +146,8 @@ function AppContent() {
     return <Router />;
   }
 
+  const footerContent = settings?.footer_content || "© 2024 IT Portal. All rights reserved.";
+
   return (
     <SidebarProvider style={style as React.CSSProperties}>
       <div className={`flex h-screen w-full ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
@@ -170,6 +172,9 @@ function AppContent() {
           <main className="flex-1 overflow-auto">
             <Router />
           </main>
+          <footer className="border-t bg-background py-3 px-4 text-center text-sm text-muted-foreground">
+            <p data-testid="text-footer-content">{footerContent}</p>
+          </footer>
         </div>
       </div>
     </SidebarProvider>

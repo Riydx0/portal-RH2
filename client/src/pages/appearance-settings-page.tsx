@@ -26,6 +26,7 @@ export default function AppearanceSettingsPage() {
   const [loginDescription, setLoginDescription] = useState("");
   const [loginBgColor, setLoginBgColor] = useState("");
   const [enableRegistration, setEnableRegistration] = useState(true);
+  const [footerContent, setFooterContent] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<LogoPreview | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
@@ -41,6 +42,7 @@ export default function AppearanceSettingsPage() {
       setLoginDescription(settings.login_description || "Manage your IT services, software, licenses, and support tickets");
       setLoginBgColor(settings.login_bg_color || "#f5f5f5");
       setEnableRegistration(settings.enable_registration !== "false");
+      setFooterContent(settings.footer_content || "© 2024 IT Portal. All rights reserved.");
     }
   }, [settings]);
 
@@ -149,6 +151,7 @@ export default function AppearanceSettingsPage() {
       await apiRequest("PATCH", "/api/settings/login_description", { value: loginDescription });
       await apiRequest("PATCH", "/api/settings/login_bg_color", { value: loginBgColor });
       await apiRequest("PATCH", "/api/settings/enable_registration", { value: enableRegistration ? "true" : "false" });
+      await apiRequest("PATCH", "/api/settings/footer_content", { value: footerContent });
 
       return true;
     },
@@ -306,6 +309,28 @@ export default function AppearanceSettingsPage() {
                 onCheckedChange={setEnableRegistration}
                 data-testid="toggle-enable-registration"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Footer</CardTitle>
+            <CardDescription>Customize the footer content across the application</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="footer-content">Footer Text</Label>
+              <Textarea
+                id="footer-content"
+                value={footerContent}
+                onChange={(e) => setFooterContent(e.target.value)}
+                placeholder="© 2024 IT Portal. All rights reserved."
+                data-testid="input-footer-content"
+                className="resize-none"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">This text will appear at the bottom of all pages</p>
             </div>
           </CardContent>
         </Card>

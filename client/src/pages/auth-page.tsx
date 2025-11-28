@@ -35,6 +35,7 @@ export default function AuthPage() {
   const loginBgColor = settings?.login_bg_color || "#f5f5f5";
   const logoUrl = settings?.logo_url || "";
   const enableRegistration = settings?.enable_registration !== "false";
+  const footerContent = settings?.footer_content || "© 2024 IT Portal. All rights reserved.";
 
   if (user) {
     return <Redirect to="/" />;
@@ -237,6 +238,10 @@ export default function AuthPage() {
           </CardContent>
         </Card>
       </div>
+
+      <footer className="w-full mt-8 py-4 text-center text-sm text-muted-foreground border-t">
+        <p data-testid="text-footer-content">{footerContent}</p>
+      </footer>
     </div>
   );
 }
