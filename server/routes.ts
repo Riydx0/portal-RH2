@@ -125,7 +125,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/download/:filename", requireAuth, (req, res) => {
+  // Public download endpoint for logos and images (used in login page)
+  app.get("/api/download/:filename", (req, res) => {
     try {
       const filename = req.params.filename;
       
