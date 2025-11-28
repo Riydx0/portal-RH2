@@ -27,6 +27,8 @@ export default function AppearanceSettingsPage() {
   const [loginBgColor, setLoginBgColor] = useState("");
   const [enableRegistration, setEnableRegistration] = useState(true);
   const [footerContent, setFooterContent] = useState("");
+  const [domainName, setDomainName] = useState("");
+  const [appUrl, setAppUrl] = useState("");
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<LogoPreview | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
@@ -43,6 +45,8 @@ export default function AppearanceSettingsPage() {
       setLoginBgColor(settings.login_bg_color || "#f5f5f5");
       setEnableRegistration(settings.enable_registration !== "false");
       setFooterContent(settings.footer_content || "© 2024 IT Portal. All rights reserved.");
+      setDomainName(settings.domain_name || "");
+      setAppUrl(settings.app_url || window.location.origin);
     }
   }, [settings]);
 
@@ -152,6 +156,8 @@ export default function AppearanceSettingsPage() {
       await apiRequest("PATCH", "/api/settings/login_bg_color", { value: loginBgColor });
       await apiRequest("PATCH", "/api/settings/enable_registration", { value: enableRegistration ? "true" : "false" });
       await apiRequest("PATCH", "/api/settings/footer_content", { value: footerContent });
+      await apiRequest("PATCH", "/api/settings/domain_name", { value: domainName });
+      await apiRequest("PATCH", "/api/settings/app_url", { value: appUrl });
 
       return true;
     },
@@ -331,6 +337,54 @@ export default function AppearanceSettingsPage() {
                 rows={3}
               />
               <p className="text-xs text-muted-foreground">This text will appear at the bottom of all pages</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Domain & URL Settings</CardTitle>
+            <CardDescription>Configure your domain and application URL</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="domain-name">Domain Name</Label>
+              <Input
+                id="domain-name"
+                type="text"
+                value={domainName}
+                onChange={(e) => setDomainName(e.target.value)}
+                placeholder="example.com"
+                data-testid="input-domain-name"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your domain name (e.g., portal.company.com)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="app-url">Application URL</Label>
+              <Input
+                id="app-url"
+                type="text"
+                value={appUrl}
+                onChange={(e) => setAppUrl(e.target.value)}
+                placeholder="https://portal.company.com"
+                data-testid="input-app-url"
+              />
+              <p className="text-xs text-muted-foreground">
+                Full URL including https:// or http://
+              </p>
+            </div>
+
+            <div className="p-3 border rounded-md bg-muted/50">
+              <p className="text-xs text-muted-foreground font-semibold mb-2">Current URL Info:</p>
+              <div className="text-xs space-y-1 font-mono">
+                <p>Current Origin: <span className="text-foreground">{window.location.origin}</span></p>
+                <p>Hostname: <span className="text-foreground">{window.location.hostname}</span></p>
+                {domainName && <p>Configured Domain: <span className="text-foreground">{domainName}</span></p>}
+                {appUrl && <p>App URL: <span className="text-foreground">{appUrl}</span></p>}
+              </div>
             </div>
           </CardContent>
         </Card>
