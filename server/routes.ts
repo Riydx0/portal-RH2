@@ -72,7 +72,7 @@ const multerStorage = multer.diskStorage({
   },
 });
 
-const allowedExtensions = ['.exe', '.msi', '.zip', '.rar', '.7z', '.iso', '.dmg', '.pkg', '.deb', '.rpm', '.pdf', '.tar', '.gz', '.tar.gz'];
+const allowedExtensions = ['.exe', '.msi', '.zip', '.rar', '.7z', '.iso', '.dmg', '.pkg', '.deb', '.rpm', '.pdf', '.tar', '.gz', '.tar.gz', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
 
 const upload = multer({
   storage: multerStorage,

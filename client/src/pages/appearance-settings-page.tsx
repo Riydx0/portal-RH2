@@ -51,16 +51,31 @@ export default function AppearanceSettingsPage() {
       
       const reader = new FileReader();
       reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
         const img = new Image();
         img.onload = () => {
           setLogoPreview({
             width: img.width,
             height: img.height,
             size: file.size,
-            dataUrl: event.target?.result as string,
+            dataUrl: dataUrl,
           });
         };
-        img.src = event.target?.result as string;
+        img.onerror = () => {
+          toast({
+            title: "Error",
+            description: "Failed to load image. Please check the file format.",
+            variant: "destructive",
+          });
+        };
+        img.src = dataUrl;
+      };
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read file.",
+          variant: "destructive",
+        });
       };
       reader.readAsDataURL(file);
     }
