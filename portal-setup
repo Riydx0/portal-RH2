@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # IT Service Portal - Cloudron Style Installation
-# One-command setup for Linux servers
+# Using git clone for reliable downloads
 #
 # Usage:
 #   wget https://raw.githubusercontent.com/Riydx0/portal-RH2/main/portal-setup
 #   chmod +x portal-setup
-#   ./portal-setup
+#   ./portal-setup [github-token-optional]
 
 set -e
 
@@ -30,15 +30,17 @@ if ! command -v node &> /dev/null; then
 fi
 
 echo "✅ Node.js $(node -v)"
+echo "✅ npm $(npm -v)"
 echo ""
 
-# Check npm
-if ! command -v npm &> /dev/null; then
-    echo "❌ npm not found"
+# Check git
+if ! command -v git &> /dev/null; then
+    echo "❌ git is required but not installed"
+    echo "Install: sudo apt install -y git"
     exit 1
 fi
 
-echo "✅ npm $(npm -v)"
+echo "✅ git $(git --version | cut -d' ' -f3)"
 echo ""
 
 # Create installation directory
@@ -54,90 +56,63 @@ if [ -d "$INSTALL_PATH" ]; then
     rm -rf "$INSTALL_PATH"
 fi
 
-mkdir -p "$INSTALL_PATH"
+echo "📥 Cloning repository from GitHub..."
+echo ""
+
+# Clone repository
+GITHUB_TOKEN="${1:-}"
+
+if [ -n "$GITHUB_TOKEN" ]; then
+    # Private repo with token
+    git clone https://${GITHUB_TOKEN}@github.com/Riydx0/portal-RH2.git "$INSTALL_PATH" 2>&1 | grep -v "^remote:" | head -20
+else
+    # Public repo or public read access
+    git clone https://github.com/Riydx0/portal-RH2.git "$INSTALL_PATH" 2>&1 | grep -v "^remote:" | head -20
+fi
+
+if [ ! -d "$INSTALL_PATH" ]; then
+    echo "❌ Clone failed"
+    exit 1
+fi
+
 cd "$INSTALL_PATH"
 
-echo "📥 Downloading portal from GitHub..."
+echo ""
+echo "✅ Repository cloned"
 echo ""
 
-# Download - try curl first, then wget
-DOWNLOAD_OK=false
-
-if command -v curl &> /dev/null; then
-    if curl -L -o main.zip https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip 2>/dev/null; then
-        DOWNLOAD_OK=true
-    fi
-fi
-
-if [ "$DOWNLOAD_OK" = false ] && command -v wget &> /dev/null; then
-    if wget -q --show-progress https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip -O main.zip; then
-        DOWNLOAD_OK=true
-    fi
-fi
-
-if [ "$DOWNLOAD_OK" = false ]; then
-    echo "❌ Failed to download. Check internet connection."
-    echo ""
-    echo "Try manual download:"
-    echo "  cd $INSTALL_PATH"
-    echo "  wget https://github.com/Riydx0/portal-RH2/archive/refs/heads/main.zip"
-    echo "  unzip main.zip"
-    echo "  mv portal-RH2-main/* ."
-    echo "  rm -rf portal-RH2-main main.zip"
-    exit 1
-fi
-
-echo ""
-echo "✅ Download complete"
-echo ""
-
-# Verify ZIP
-if ! unzip -t main.zip > /dev/null 2>&1; then
-    echo "❌ ZIP file is corrupted"
-    rm -f main.zip
-    exit 1
-fi
-
-echo "📂 Extracting files..."
-unzip -q main.zip
-
-# Move extracted files
-if [ -d "portal-RH2-main" ]; then
-    mv portal-RH2-main/* .
-    rmdir portal-RH2-main
-fi
-
-rm -f main.zip
-
-# Verify we have package.json
+# Verify package.json
 if [ ! -f "package.json" ]; then
-    echo "❌ Installation failed - package.json not found"
+    echo "❌ package.json not found"
     exit 1
 fi
-
-echo "✅ Files extracted"
-echo ""
 
 echo "📦 Installing dependencies..."
 echo "   (This may take 3-5 minutes...)"
 echo ""
-npm install --production 2>&1 | tail -20
-
-echo ""
+npm install --production > /tmp/npm_install.log 2>&1 || {
+    echo "❌ npm install failed"
+    tail -20 /tmp/npm_install.log
+    exit 1
+}
 echo "✅ Dependencies installed"
 echo ""
 
 echo "🔨 Building project..."
-npm run build 2>&1 | tail -10
-
-echo ""
+npm run build > /tmp/npm_build.log 2>&1 || {
+    echo "❌ Build failed"
+    tail -20 /tmp/npm_build.log
+    exit 1
+}
 echo "✅ Build complete"
 echo ""
 
 echo "📊 Setting up database..."
-npm run db:push 2>&1 | tail -10
-
-echo ""
+npm run db:push > /tmp/npm_db.log 2>&1 || {
+    echo "❌ Database setup failed"
+    tail -20 /tmp/npm_db.log
+    exit 1
+}
 echo "✅ Database ready"
 echo ""
 
